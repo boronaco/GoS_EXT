@@ -571,9 +571,9 @@ function Darius:Menu()
 	KoreanMechanics.Harass.MM:MenuElement({id = "WMana", name = "Min Mana to W in Harass(%)", value = 40, min = 0, max = 100, step = 1, leftIcon = self.Icons.W})
 	KoreanMechanics.Harass.MM:MenuElement({id = "EMana", name = "Min Mana to E in Harass(%)", value = 40, min = 0, max = 100, step = 1, leftIcon = self.Icons.E})
 
-	KoreanMechanics.Clear:MenuElement({id = "Q", name = "Use Decimate (Q)", value = true, leftIcon = self.Icons.Q})
+	KoreanMechanics.Clear:MenuElement({id = "Q", name = "Use Q", value = true, leftIcon = self.Icons.Q})
 	KoreanMechanics.Clear:MenuElement({id = "QC", name = "Min amount of minions to Q", value = 3, min = 1, max = 7, step = 1})
-	KoreanMechanics.Clear:MenuElement({id = "W", name = "Use Crippling Strike (W)", value = false, leftIcon = self.Icons.W})
+	KoreanMechanics.Clear:MenuElement({id = "W", name = "Use W", value = false, leftIcon = self.Icons.W})
 	KoreanMechanics.Clear:MenuElement({id = "Mana", name = "Min Mana to Clear (%)", value = 40, min = 0, max = 100, step = 1})
 
 	KoreanMechanics.KS:MenuElement({id = "ON", name = "Enable Free Elo [?]", value = true, tooltip = "Enable Smart-R to Killsteal"})
