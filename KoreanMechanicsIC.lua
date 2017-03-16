@@ -272,6 +272,16 @@ function HaveDianaBuff(unit)
     return false
 end
 
+function HaveBrandBuff(unit)
+    for i = 0, unit.buffCount do
+        local buff = unit:GetBuff(i)
+        if buff and buff.name == "brandablaze" and buff.count > 0 then
+            return true
+        end
+    end
+    return false
+end
+
 function RStacks(unit)
 	if not unit then print("nounit") return 0 end
 	for i = 0, unit.buffCount do
@@ -2119,6 +2129,7 @@ function Brand:Menu()
 	KoreanMechanics.Combo:MenuElement({id = "W", name = "Use W", value = true, leftIcon = self.Icons.W})
 	KoreanMechanics.Combo:MenuElement({id = "E", name = "Use E", value = true, leftIcon = self.Icons.E})
 	KoreanMechanics.Combo:MenuElement({id = "R", name = "Use R", value = true, leftIcon = self.Icons.R})
+	KoreanMechanics.Combo:MenuElement({id = "QB", name = "Q only ablaze targets for stun", value = false})
 	KoreanMechanics.Combo:MenuElement({type = MENU, id = "RS",  name = "R Settings"})
 	KoreanMechanics.Combo.RS:MenuElement({id = "RE", name = "Min Amount of Enemy's to R", value = 2, min = 1, max = 5, step = 1})
 	KoreanMechanics.Combo.RS:MenuElement({id = "RKillable", name = "Use Smart-R on Killable", value = true})
@@ -2170,6 +2181,7 @@ end
 
 function Brand:Combo(target)
 local ComboQ = KoreanMechanics.Combo.Q:Value()
+local ComboQB = KoreanMechanics.Combo.QB:Value()
 local ComboW = KoreanMechanics.Combo.W:Value()
 local ComboE = KoreanMechanics.Combo.E:Value()
 local ComboR = KoreanMechanics.Combo.R:Value() 
@@ -2227,7 +2239,13 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 				end
 		else
 			if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-				if target.valid and not target.isImmortal  and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
+				if target.valid and ComboQB and not target.isImmortal and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
+					local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
+					if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and HaveBrandBuff(target) and Ready(_Q) then
+						Control.CastSpell(HK_Q, Qpos)
+					end
+				end
+				if target.valid and not ComboQB and not target.isImmortal and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
   				local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 					if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and Ready(_Q) then
 						Control.CastSpell(HK_Q, Qpos)
