@@ -101,6 +101,11 @@ local function GetDistance(p1,p2)
 	return  math.sqrt(math.pow((p2.x - p1.x),2) + math.pow((p2.y - p1.y),2) + math.pow((p2.z - p1.z),2))
 end
 
+
+local function GetDistance2D(p1,p2)
+return  math.sqrt(math.pow((p2.x - p1.x),2) + math.pow((p2.y - p1.y),2))
+end
+
 function HasBuff(unit, buffname)
 	if type(unit) ~= "userdata" then error("{HasBuff}: bad argument #1 (userdata expected, got "..type(unit)..")") end
 	if type(buffname) ~= "string" then error("{HasBuff}: bad argument #2 (string expected, got "..type(buffname)..")") end
@@ -153,6 +158,64 @@ function IsValidTarget(unit, range, checkTeam, from)
 		return false 
 	end 
 	return unit.pos:DistanceTo(from.pos and from.pos or myHero.pos) < range 
+end
+
+local _OnVision = {}
+function OnVision(unit)
+	if _OnVision[unit.networkID] == nil then _OnVision[unit.networkID] = {state = unit.visible , tick = GetTickCount(), pos = unit.pos} end
+	if _OnVision[unit.networkID].state == true and not unit.visible then _OnVision[unit.networkID].state = false _OnVision[unit.networkID].tick = GetTickCount() end
+	if _OnVision[unit.networkID].state == false and unit.visible then _OnVision[unit.networkID].state = true _OnVision[unit.networkID].tick = GetTickCount() end
+	return _OnVision[unit.networkID]
+end
+Callback.Add("Tick", function() OnVisionF() end)
+local visionTick = GetTickCount()
+function OnVisionF()
+	if GetTickCount() - visionTick > 100 then
+		for i,v in pairs(GetEnemyHeroes()) do
+			OnVision(v)
+		end
+	end
+end
+
+local _OnWaypoint = {}
+function OnWaypoint(unit)
+	if _OnWaypoint[unit.networkID] == nil then _OnWaypoint[unit.networkID] = {pos = unit.posTo , speed = unit.ms, time = Game.Timer()} end
+	if _OnWaypoint[unit.networkID].pos ~= unit.posTo then 
+		-- print("OnWayPoint:"..unit.charName.." | "..math.floor(Game.Timer()))
+		_OnWaypoint[unit.networkID] = {startPos = unit.pos, pos = unit.posTo , speed = unit.ms, time = Game.Timer()}
+			DelayAction(function()
+				local time = (Game.Timer() - _OnWaypoint[unit.networkID].time)
+				local speed = GetDistance2D(_OnWaypoint[unit.networkID].startPos,unit.pos)/(Game.Timer() - _OnWaypoint[unit.networkID].time)
+				if speed > 1250 and time > 0 and unit.posTo == _OnWaypoint[unit.networkID].pos and GetDistance(unit.pos,_OnWaypoint[unit.networkID].pos) > 200 then
+					_OnWaypoint[unit.networkID].speed = GetDistance2D(_OnWaypoint[unit.networkID].startPos,unit.pos)/(Game.Timer() - _OnWaypoint[unit.networkID].time)
+					-- print("OnDash: "..unit.charName)
+				end
+			end,0.05)
+	end
+	return _OnWaypoint[unit.networkID]
+end
+
+local function GetPred(unit,speed,delay)
+	local speed = speed or math.huge
+	local delay = delay or 0.25
+	local unitSpeed = unit.ms
+	if OnWaypoint(unit).speed > unitSpeed then unitSpeed = OnWaypoint(unit).speed end
+	if OnVision(unit).state == false then
+		local unitPos = unit.pos + Vector(unit.pos,unit.posTo):Normalized() * ((GetTickCount() - OnVision(unit).tick)/1000 * unitSpeed)
+		local predPos = unitPos + Vector(unit.pos,unit.posTo):Normalized() * (unitSpeed * (delay + (GetDistance(myHero.pos,unitPos)/speed)))
+		if GetDistance(unit.pos,predPos) > GetDistance(unit.pos,unit.posTo) then predPos = unit.posTo end
+		return predPos
+	else
+		if unitSpeed > unit.ms then
+			local predPos = unit.pos + Vector(OnWaypoint(unit).startPos,unit.posTo):Normalized() * (unitSpeed * (delay + (GetDistance(myHero.pos,unit.pos)/speed)))
+			if GetDistance(unit.pos,predPos) > GetDistance(unit.pos,unit.posTo) then predPos = unit.posTo end
+			return predPos
+		elseif IsImmobileTarget(unit) then
+			return unit.pos
+		else
+			return unit:GetPrediction(speed,delay)
+		end
+	end
 end
 
 function GetEnemyMinions(range)
@@ -359,14 +422,14 @@ local ComboION = KoreanMechanics.Combo.ION:Value()
 local ComboIFAST = KoreanMechanics.Combo.IFAST:Value()
 	if ComboE and Ready(_E) then
 		if target.valid and Ready(_E) and target:GetCollision(self.Spells.E.width, self.Spells.E.speed, self.Spells.E.delay) == 0 and target.distance <= 1.1 * self.Spells.E.range then
-  			 local Epos = target:GetPrediction(self.Spells.E.speed, self.Spells.E.delay)
+  			 local Epos = GetPred(target, self.Spells.E.speed, 0.25 + Game.Latency()/1000 )
       			if Epos and GetDistance(Epos,myHero.pos) < self.Spells.E.range then
         			 Control.CastSpell(HK_E, Epos)
      			end
 		end
 		if ComboQ and Ready(_Q) then
 			if target.valid and Ready(_Q) and target.distance <= 1.1 * self.Spells.Q.range then
-  			 	local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  			 	local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
       			if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
         			 Control.CastSpell(HK_Q, Qpos)
      			end
@@ -379,7 +442,7 @@ local ComboIFAST = KoreanMechanics.Combo.IFAST:Value()
 		end
 	elseif ComboQ and Ready(_Q) then
 		if target.valid and Ready(_Q) and target.distance <= 1.1 * self.Spells.Q.range then
-  			 local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  			 	local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
       			if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
         			 Control.CastSpell(HK_Q, Qpos)
      			end
@@ -429,14 +492,14 @@ local HarassE = KoreanMechanics.Harass.E:Value()
 if (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.Mana:Value() / 100) then
 	if HarassE and Ready(_E) then
 		if target.valid and Ready(_E) and target:GetCollision(self.Spells.E.width, self.Spells.E.speed, self.Spells.E.delay) == 0 and target.distance <= 1.1 * self.Spells.E.range then
-  			 local Epos = target:GetPrediction(self.Spells.E.speed, self.Spells.E.delay)
+  		local Epos = GetPred(target, self.Spells.E.speed, 0.25 + Game.Latency()/1000 )
       			if Epos and GetDistance(Epos,myHero.pos) < self.Spells.E.range then
         			 Control.CastSpell(HK_E, Epos)
      			end
      	end 
 		if HarassQ and Ready(_Q) then 
 			if target.valid and Ready(_Q) and target.distance <= 1.1 * self.Spells.Q.range then
-  			 	local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  			 	local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000 )
       			if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
         			 Control.CastSpell(HK_Q, Qpos)
      			end
@@ -449,7 +512,7 @@ if (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.Mana:Value() / 100) the
 		end
 	elseif  HarassQ and Ready(_Q) then 
 				if target.valid and Ready(_Q) and target.distance <= 1.1 * self.Spells.Q.range then
-  			 		local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  			 	local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
       				if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
         				 Control.CastSpell(HK_Q, Qpos)
      				end
@@ -484,7 +547,7 @@ local KSI = KoreanMechanics.KS.I:Value()
 			if KSON then 
 				if KSE and target.valid and Ready(_E) and target:GetCollision(self.Spells.E.width, self.Spells.E.speed, self.Spells.E.delay) == 0 and target.distance <= 1.1 * self.Spells.E.range and target.isEnemy and not target.dead then
 					if getdmg("E", target, myHero) > target.health and Ready(_E) then
-  					local Epos = target:GetPrediction(self.Spells.E.speed, self.Spells.E.delay)
+  			 		local Epos = GetPred(target, self.Spells.E.speed, 0.25 + Game.Latency()/1000)
       					if Epos and GetDistance(Epos,myHero.pos) < self.Spells.E.range then
         				 	Control.CastSpell(HK_E, Epos)
      					end
@@ -492,7 +555,7 @@ local KSI = KoreanMechanics.KS.I:Value()
 				end
 				if KSQ and target.valid and Ready(_Q) and target.distance <= 1.1 * self.Spells.Q.range and target.isEnemy and not target.dead then
 					if getdmg("Q", target, myHero)*2 > target.health and Ready(_Q) then
-					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  			 		local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 						if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
 							Control.CastSpell(HK_Q, Qpos)
 						end
@@ -662,7 +725,7 @@ local Rdmg = GetDariusRdmg(target)
 	end
 		if ComboE and Ready(_E) then 
 			if target.valid and Ready(_E) and target.distance <= 1.025 * self.Spells.E.range then 
-			local Epos = target:GetPrediction(self.Spells.E.speed, self.Spells.E.delay)
+  			 	local Epos = GetPred(target, self.Spells.E.speed, 0.32 + Game.Latency()/1000)
 				if Epos and GetDistance(Epos, myHero.pos) < self.Spells.E.range  then 
 					Control.CastSpell(HK_E, Epos)
 				end
@@ -833,7 +896,7 @@ local HarassWMana = KoreanMechanics.Harass.MM.WMana:Value()
 local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
 		if HarassE and Ready(_E) then
 			if target.valid and Ready(_E) and target.distance <= 1.1* self.Spells.E.range then 
-			local Epos = target:GetPrediction(self.Spells.E.speed, self.Spells.E.delay)
+  			 local Epos = GetPred(target, self.Spells.E.speed, 0.32 + Game.Latency()/1000)
 				if Epos and GetDistance(Epos, myHero.pos) < self.Spells.E.range then 
 					Control.CastSpell(HK_E, Epos)
 				end
@@ -1111,7 +1174,7 @@ local ComboIFAST = KoreanMechanics.Combo.IFAST:Value()
 					end
 					if ComboQ and Ready(_Q) then
 						if target.valid and Ready(_Q) and target.distance <= 1.1 * self.Spells.Q.range then
-  						local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  			 			local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
       						if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
         						Control.CastSpell(HK_Q, Qpos)
      						end
@@ -1124,7 +1187,7 @@ local ComboIFAST = KoreanMechanics.Combo.IFAST:Value()
 					end
 					if ComboQ and Ready(_Q) then
 						if target.valid and Ready(_Q) and target.distance <= 1.1 * self.Spells.Q.range then
-  						local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  			 			local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
       						if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
         						Control.CastSpell(HK_Q, Qpos)
      						end
@@ -1133,7 +1196,7 @@ local ComboIFAST = KoreanMechanics.Combo.IFAST:Value()
 			else
 				if ComboQ and Ready(_Q) then
 					if target.valid and Ready(_Q) and target.distance <= 1.1 * self.Spells.Q.range then
-  					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  			 		local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
       					if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
         					Control.CastSpell(HK_Q, Qpos)
      					end
@@ -1156,7 +1219,7 @@ local ComboIFAST = KoreanMechanics.Combo.IFAST:Value()
     						Control.CastSpell(HK_R, target)
     					end
     			elseif ComboR and Ready(_R) then
-    					if IsValidTarget(target, self.Spells.R.range, true, myHero) and target.isEnemy and Ready(_R) then
+    					if IsValidTarget(target, self.Spells.R.range, true, myHero) and target.isEnemy and not Ready(_Q) and Ready(_R) then
     						Control.CastSpell(HK_R, target)
     					end
     				end
@@ -1197,7 +1260,7 @@ if (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.Mana:Value() / 100) the
 		end
 		if HarassQ and Ready(_Q) then
 			if target.valid and Ready(_Q) and target.distance <= 1.1 * self.Spells.Q.range then
-  			local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  			 local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
       			if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
         			Control.CastSpell(HK_Q, Qpos)
      			end
@@ -1210,7 +1273,7 @@ if (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.Mana:Value() / 100) the
 		end
 		if HarassQ and Ready(_Q) then
 			if target.valid and Ready(_Q) and target.distance <= 1.1 * self.Spells.Q.range then
-  			local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  			 local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
       			if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
         			Control.CastSpell(HK_Q, Qpos)
      			end
@@ -1219,8 +1282,8 @@ if (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.Mana:Value() / 100) the
     else
     	if HarassQ and Ready(_Q) then
     		if target.valid and Ready(_Q) and target.distance <= 1.1 * self.Spells.Q.range then
-  			local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
-      			if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
+  			 	local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
+  			 	if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
         			Control.CastSpell(HK_Q, Qpos)
      			end
      		end
@@ -1250,7 +1313,7 @@ local KSI = KoreanMechanics.KS.I:Value()
 				end
 				if KSQ and Ready(_Q) then
 					if target.valid and target.isEnemy and Ready(_Q) and target.distance <= 1.1 * self.Spells.Q.range and not target.isDead and target.isTargetable then
-  					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  			 		local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
       					if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and getdmg("Q", target, myHero) > target.health then
         					Control.CastSpell(HK_Q, Qpos)
      					end
@@ -1307,7 +1370,7 @@ function KogMaw:__init()
 	self.Spells = {
 		Q = {range = 1175, delay = 0.25, speed = 1600,  width = 80},
 		W = {range = 700, delay = 0.25, speed = math.huge}, --ITS OVER 9000!!!!
-		E = {range = 1200, delay = 0.25, speed = 1000, width = 65, collision = false},
+		E = {range = 1200, delay = 0.25, speed = 1000, width = 65, collision = true},
 		R = {range = GetKogRange(), delay = 0.85, speed = math.huge},
 		SummonerDot = {range = 600, dmg = 50+20*myHero.levelData.lvl}
 	}
@@ -1322,6 +1385,7 @@ function KogMaw:Menu()
 	KoreanMechanics.Combo:MenuElement({id = "E", name = "Use E", value = true, leftIcon = self.Icons.E})
 	KoreanMechanics.Combo:MenuElement({id = "R", name = "Use R [?]", value = true, tooltip = "Uses Smart-R when not in AA range", leftIcon = self.Icons.R})
 	KoreanMechanics.Combo:MenuElement({id = "RHP", name = "Max Enemy HP to R in Combo(%)", value = 40, min = 0, max = 100, step = 1})
+	KoreanMechanics.Combo:MenuElement({id = "RR", name = "Min Range to R in Combo", value = 710, min = 0, max = 1200, step = 10})
 	KoreanMechanics.Combo:MenuElement({id = "Mode", name = "Combo Mode", drop = {"AP Combo", "AD Combo"}})
 	KoreanMechanics.Combo:MenuElement({type = MENU, id = "IT", name = "Items" })
 	KoreanMechanics.Combo.IT:MenuElement({id = "YG", name = "Use Youmuu's Ghostblade", value = true, leftIcon = "http://static.lolskill.net/img/items/32/3142.png"})
@@ -1364,6 +1428,7 @@ function KogMaw:Menu()
 	KoreanMechanics.Draw:MenuElement({id = "W", name = "Draw W", value = true, leftIcon = self.Icons.W})
 	KoreanMechanics.Draw:MenuElement({id = "E", name = "Draw E", value = true, leftIcon = self.Icons.E})
 	KoreanMechanics.Draw:MenuElement({id = "R", name = "Draw R", value = true, leftIcon = self.Icons.R})
+	KoreanMechanics.Draw:MenuElement({id = "CM", name = "Draw ComboMode", value = true})	
 
 end
 
@@ -1388,6 +1453,7 @@ local ComboE = KoreanMechanics.Combo.E:Value()
 local ComboR = KoreanMechanics.Combo.R:Value()
 local ComboMode = KoreanMechanics.Combo.Mode:Value()
 local ComboRHP = KoreanMechanics.Combo.RHP:Value()
+local ComboRR = KoreanMechanics.Combo.RR:Value()
 local ComboYG = KoreanMechanics.Combo.IT.YG:Value()
 local ComboYGR = KoreanMechanics.Combo.IT.YGR:Value()
 local ComboBC = KoreanMechanics.Combo.IT.BC:Value()
@@ -1399,8 +1465,8 @@ local ComboWMana = KoreanMechanics.Combo.MM.WMana:Value()
 local ComboEMana = KoreanMechanics.Combo.MM.EMana:Value()
 local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 	if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then
-		if target.valid and target.distance < 1.1*GetKogRange() and target.distance >= 670 and (target.health/target.maxHealth) <= (ComboRHP/100) and Ready(_R) then
-		local Rpos = target:GetPrediction(self.Spells.R.speed, self.Spells.R.delay)
+		if target.valid and target.distance < 1.1*GetKogRange() and target.distance >= ComboRR and (target.health/target.maxHealth) <= (ComboRHP/100) and Ready(_R) then
+  			local Rpos = GetPred(target, self.Spells.R.speed, 0.85 + Game.Latency()/1000)
 			if Rpos and Rpos.onScreen and GetDistance(Rpos,myHero.pos) < GetKogRange() and Ready(_R) then
 				Control.CastSpell(HK_R, Rpos)
 			end
@@ -1453,15 +1519,15 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 	end
 	if ComboMode == 1 then
 		if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then
-			if target.valid and target.distance < 1.1*GetKogRange() and target.distance >= 670 and (target.health/target.maxHealth) <= (ComboRHP/100) and Ready(_R) then
-			local Rpos = target:GetPrediction(self.Spells.R.speed, self.Spells.R.delay)
+			if target.valid and target.distance < 1.1*GetKogRange() and target.distance >= ComboRR and (target.health/target.maxHealth) <= (ComboRHP/100) and Ready(_R) then
+  			local Rpos = GetPred(target, self.Spells.R.speed, 0.85 + Game.Latency()/1000)
 				if Rpos and GetDistance(Rpos,myHero.pos) < GetKogRange() and Ready(_R) then
 					Control.CastSpell(HK_R, Rpos)
 				end
 			end
 			if ComboE and Ready(_E) then
 				if target.valid and Ready(_E) and target.distance <= 1.05 * self.Spells.E.range and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
-  				local Epos = target:GetPrediction(self.Spells.E.speed, self.Spells.E.delay)
+  				local Epos = GetPred(target, self.Spells.E.speed, 0.25 + Game.Latency()/1000)
 	      			if Epos and GetDistance(Epos,myHero.pos) < self.Spells.E.range then
 	        			Control.CastSpell(HK_E, Epos)
 	     			end
@@ -1469,7 +1535,7 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 			end
 			if ComboQ and Ready(_Q) then
 				if target.valid and Ready(_Q) and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 and target.distance <= 1.1 * self.Spells.Q.range and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-	  			local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  				local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 	      			if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
 	        			Control.CastSpell(HK_Q, Qpos)
 	     			end
@@ -1482,14 +1548,14 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 			end
 	elseif ComboE and Ready(_E) then
 			if target.valid and Ready(_E) and target.distance <= 1.05 * self.Spells.E.range and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
-  			local Epos = target:GetPrediction(self.Spells.E.speed, self.Spells.E.delay)
+  				local Epos = GetPred(target, self.Spells.E.speed, 0.25 + Game.Latency()/1000)
 	      		if Epos and GetDistance(Epos,myHero.pos) < self.Spells.E.range then
 	        		Control.CastSpell(HK_E, Epos)
 	     		end
 			end
 			if ComboQ and Ready(_Q) then
 				if target.valid and Ready(_Q) and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 and target.distance <= 1.1 * self.Spells.Q.range and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-  				local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  				local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 	      			if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
 	        			 Control.CastSpell(HK_Q, Qpos)
 	     			end
@@ -1502,7 +1568,7 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 			end
 	elseif  ComboQ and Ready(_Q) then
 			if target.valid and Ready(_Q) and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 and target.distance <= 1.1 * self.Spells.Q.range and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-  			local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  			local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 	      		if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
 	        		Control.CastSpell(HK_Q, Qpos)
 	     		end
@@ -1521,15 +1587,15 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 	end 
 elseif ComboMode == 2 then 
 		if  ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then
-			if target.valid and target.distance < 1.1*GetKogRange() and target.distance >= 670 and (target.health/target.maxHealth) <= (ComboRHP/100) and Ready(_R) then
-			local Rpos = target:GetPrediction(self.Spells.R.speed, self.Spells.R.delay)
+			if target.valid and target.distance < 1.1*GetKogRange() and target.distance >= ComboRR and (target.health/target.maxHealth) <= (ComboRHP/100) and Ready(_R) then
+  			local Rpos = GetPred(target, self.Spells.R.speed, 0.85 + Game.Latency()/1000)
 				if Rpos and GetDistance(Rpos,myHero.pos) < GetKogRange() and Ready(_R) then
 					Control.CastSpell(HK_R, Rpos)
 				end
 			end
 			if  ComboQ and Ready(_Q) then
 				if target.valid and Ready(_Q) and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 and target.distance <= 1.1 * self.Spells.Q.range and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-	  			local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+	  			local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 	      			if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
 	        			Control.CastSpell(HK_Q, Qpos)
 	     			end
@@ -1542,7 +1608,7 @@ elseif ComboMode == 2 then
 			end
 			if ComboE and Ready(_E) then
 				if target.valid and Ready(_E) and target.distance <= 1.05 * self.Spells.E.range and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
-	  			local Epos = target:GetPrediction(self.Spells.E.speed, self.Spells.E.delay)
+	  			local Epos = GetPred(target, self.Spells.E.speed, 0.25 + Game.Latency()/1000)
 	      			if Epos and GetDistance(Epos,myHero.pos) < self.Spells.E.range then
 	        			Control.CastSpell(HK_E, Epos)
 	     			end
@@ -1550,7 +1616,7 @@ elseif ComboMode == 2 then
 			end
 	elseif ComboQ and Ready(_Q) then
 			if target.valid and Ready(_Q) and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 and target.distance <= 1.1 * self.Spells.Q.range and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-	  		local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+	  		local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 	      		if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
 	        		Control.CastSpell(HK_Q, Qpos)
 	     		end
@@ -1562,7 +1628,7 @@ elseif ComboMode == 2 then
 			end
 			if ComboE and Ready(_E) then
 				if target.valid and Ready(_E) and target.distance <= 1.05 * self.Spells.E.range and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
-	  			local Epos = target:GetPrediction(self.Spells.E.speed, self.Spells.E.delay)
+	  			local Epos = GetPred(target, self.Spells.E.speed, 0.25 + Game.Latency()/1000)
 	      			if Epos and GetDistance(Epos,myHero.pos) < self.Spells.E.range then
 	        			Control.CastSpell(HK_E, Epos)
 	     			end
@@ -1574,7 +1640,7 @@ elseif ComboMode == 2 then
 			end 
 			if ComboE and Ready(_E) then
 				if target.valid and Ready(_E) and target.distance <= 1.05 * self.Spells.E.range and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
-	  			local Epos = target:GetPrediction(self.Spells.E.speed, self.Spells.E.delay)
+	  			local Epos = GetPred(target, self.Spells.E.speed, 0.25 + Game.Latency()/1000)
 	      			if Epos and GetDistance(Epos,myHero.pos) < self.Spells.E.range then
 	        			Control.CastSpell(HK_E, Epos)
 	     			end
@@ -1583,7 +1649,7 @@ elseif ComboMode == 2 then
 	else
 		if ComboE and Ready(_E) then
 			if target.valid and Ready(_E) and target.distance <= 1.05 * self.Spells.E.range and (myHero.mana/myHero.maxMana >= ComboEMana / 100) and not Ready(_Q) then
-	  		local Epos = target:GetPrediction(self.Spells.E.speed, self.Spells.E.delay)
+	  		local Epos = GetPred(target, self.Spells.E.speed, 0.25 + Game.Latency()/1000)
 	      		if Epos and GetDistance(Epos,myHero.pos) < self.Spells.E.range then
 	        		Control.CastSpell(HK_E, Epos)
 	     		end
@@ -1605,14 +1671,14 @@ local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
 	if HarassE then 
 		if Ready(_E) and (myHero.mana/myHero.maxMana >= HarassEMana / 100) then
 			if target.valid and Ready(_E) and target.distance <= 1.1 * self.Spells.E.range then
-  			local Epos = target:GetPrediction(self.Spells.E.speed, self.Spells.E.delay)
+  			local Epos = GetPred(target, self.Spells.E.speed, 0.25 + Game.Latency()/1000)
       			if Epos and GetDistance(Epos,myHero.pos) < self.Spells.E.range then
         			Control.CastSpell(HK_E, Epos)
      			end
 			end
 		if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
 			if target.valid and Ready(_Q) and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 and target.distance <= 1.1 * self.Spells.Q.range then
-  			local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  			local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
       			if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
         			Control.CastSpell(HK_Q, Qpos)
      			end
@@ -1625,7 +1691,7 @@ local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
 		end
 	elseif HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
 			if target.valid and Ready(_Q) and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 and target.distance <= 1.1 * self.Spells.Q.range then
-  			local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  			local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
       			if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
         			Control.CastSpell(HK_Q, Qpos)
      			end
@@ -1687,8 +1753,8 @@ local KSMana = KoreanMechanics.KS.Mana:Value()
 		if (myHero.mana/myHero.maxMana >= KSMana / 100) then
 			if KSON then
 				if KSR and Ready(_R) then
-					if IsValidTarget(target, 1350, true, myHero) and target.distance >= 670 and getdmg("R", target, myHero) > target.health and Ready(_R) then
-					local Rpos = target:GetPrediction(self.Spells.R.speed, self.Spells.R.delay)
+					if IsValidTarget(target, 1350, true, myHero) and target.distance >= ComboRR and getdmg("R", target, myHero) > target.health and Ready(_R) then
+  					local Rpos = GetPred(target, self.Spells.R.speed, 0.85 + Game.Latency()/1000)
 						if Rpos and Rpos.onScreen and GetDistance(Rpos,myHero.pos) < 1310 and Ready(_R) then
 							Control.CastSpell(HK_R, Rpos)
 						end
@@ -1696,7 +1762,7 @@ local KSMana = KoreanMechanics.KS.Mana:Value()
 				end
 				if KSE and Ready(_E) then
 					if target.valid and Ready(_E) and target.distance <= 1.1 * self.Spells.E.range and getdmg("E", target, myHero) > target.health then
-  					local Epos = target:GetPrediction(self.Spells.E.speed, self.Spells.E.delay)
+  					local Epos = GetPred(target, self.Spells.E.speed, 0.25 + Game.Latency()/1000)
       					if Epos and GetDistance(Epos,myHero.pos) < self.Spells.E.range then
         					Control.CastSpell(HK_E, Epos)
      					end
@@ -1704,7 +1770,7 @@ local KSMana = KoreanMechanics.KS.Mana:Value()
 				end
 				if KSQ and Ready(_Q) then
 					if target.valid and Ready(_Q) and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 and target.distance <= 1.1 * self.Spells.Q.range and getdmg("Q", target, myHero) > target.health then
-  					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  					local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
       					if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range then
         					Control.CastSpell(HK_Q, Qpos)
      					end
@@ -1720,6 +1786,7 @@ end
 function KogMaw:Draw()
 	if not myHero.dead then
 		if KoreanMechanics.Draw.Enabled:Value() then 
+			local textPos = myHero.pos:To2D()
 			if KoreanMechanics.Draw.Q:Value() then
 			Draw.Circle(myHero.pos, self.Spells.Q.range, 1, Draw.Color(255, 52, 221, 221))
 			end
@@ -1732,6 +1799,13 @@ function KogMaw:Draw()
 			if KoreanMechanics.Draw.R:Value() then
 				if GetKogRange() > 1 then
 					Draw.Circle(myHero.pos, GetKogRange(), 1, Draw.Color(255, 000, 255, 000))	
+				end
+			end
+			if KoreanMechanics.Draw.CM:Value() then
+				if KoreanMechanics.Combo.Mode:Value() == 1 then
+					Draw.Text("AP Combo Active", 20, textPos.x - 80, textPos.y + 40, Draw.Color(255, 000, 255, 000)) 
+				elseif KoreanMechanics.Combo.Mode:Value() == 2 then
+					Draw.Text("AD Combo Active", 20, textPos.x - 80, textPos.y + 40, Draw.Color(255, 000, 255, 000)) 
 				end
 			end
 		end
@@ -1800,7 +1874,8 @@ function Blitzcrank:Menu()
 
 	KoreanMechanics.Draw:MenuElement({id = "Enabled", name = "Enable Drawings", value = true})
 	KoreanMechanics.Draw:MenuElement({id = "Q", name = "Draw Q", value = true, leftIcon = self.Icons.Q})
-	KoreanMechanics.Draw:MenuElement({id = "W", name = "Draw W", value = true, leftIcon = self.Icons.W})
+	KoreanMechanics.Draw:MenuElement({id = "QCD", name = "Draw Q Ready", value = true})	
+	KoreanMechanics.Draw:MenuElement({id = "W", name = "Draw W activate range", value = true, leftIcon = self.Icons.W})
 	KoreanMechanics.Draw:MenuElement({id = "E", name = "Draw E", value = true, leftIcon = self.Icons.E})
 	KoreanMechanics.Draw:MenuElement({id = "R", name = "Draw R", value = true, leftIcon = self.Icons.R})
 
@@ -1836,7 +1911,7 @@ local ComboEMana = KoreanMechanics.Combo.MM.EMana:Value()
 local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 	if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
 		if target.valid and Ready(_Q) and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 and target.distance <= 1.1 * self.Spells.Q.range and KoreanMechanics.Combo.W[target.charName]:Value() then
-		local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  		local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 			if Qpos and GetDistance(Qpos,myHero.pos) <  self.Spells.Q.range then
         		Control.CastSpell(HK_Q, Qpos)
      		end
@@ -1861,14 +1936,14 @@ elseif ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100)
 				Control.CastSpell(HK_E, mousePos)
 			end
 		end
-		if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) and GetEnemyCount(600) >= ComboRE and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 1 or not Ready(_Q) then
+		if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) and GetEnemyCount(600) >= ComboRE and (target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 1 or not Ready(_Q)) then
 			if target.valid and ComboR and Ready(_R) and target.distance <= self.Spells.R.range then 
 				Control.CastSpell(HK_R)
 			end
 		end
 else
 	if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) and GetEnemyCount(600) >= ComboRE and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 1 or not Ready(_Q) then
-		if Ready(_E) and ComboE then
+		if Ready(_R) and ComboE then
 			if target.distance >= 350  then
 				if target.valid and ComboR and Ready(_R) and target.distance <= self.Spells.R.range then 
 					Control.CastSpell(HK_R)
@@ -1894,7 +1969,7 @@ local HarassE = KoreanMechanics.Harass.E:Value()
 local HarassMana = KoreanMechanics.Harass.Mana:Value()	
 	if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassMana / 100) then
 		if target.valid  and Ready(_Q) and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 and target.distance <= 1.1 * self.Spells.Q.range and KoreanMechanics.Harass.W[target.charName]:Value() then
-		local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  		local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 			if Qpos and GetDistance(Qpos,myHero.pos) <  self.Spells.Q.range then
         		Control.CastSpell(HK_Q, Qpos)
      		end
@@ -1947,7 +2022,7 @@ local KSMana = KoreanMechanics.KS.Mana:Value()
 		if (myHero.mana/myHero.maxMana >= KSMana / 100) then
 			if KSON then
 				if KSQ and target.isEnemy and not target.isDead and target.valid and getdmg("Q", target, myHero) > target.health and Ready(_Q) and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 and target.distance <= 1.1 * self.Spells.Q.range then
-				local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  				local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 					if Qpos and GetDistance(Qpos,myHero.pos) <  self.Spells.Q.range then
         				Control.CastSpell(HK_Q, Qpos)
      				end
@@ -1968,20 +2043,24 @@ end
 function Blitzcrank:Draw()
 	if not myHero.dead then
 		if KoreanMechanics.Draw.Enabled:Value() then 
+			local textPos = myHero.pos:To2D()
 			if KoreanMechanics.Draw.Q:Value() then
 			Draw.Circle(myHero.pos, self.Spells.Q.range, 1, Draw.Color(255, 52, 221, 221))
 			end
 			if KoreanMechanics.Draw.W:Value() then
-			Draw.Circle(myHero.pos, self.Spells.W.range, 1, Draw.Color(255, 255, 255, 255))
+			Draw.Circle(myHero.pos, KoreanMechanics.Combo.WR:Value(), 1, Draw.Color(255, 255, 255, 255))
 			end
 			if KoreanMechanics.Draw.E:Value() then
 			Draw.Circle(myHero.pos, self.Spells.E.range, 1, Draw.Color(255, 255, 0, 128))
 			end
 			if KoreanMechanics.Draw.R:Value() then
 			Draw.Circle(myHero.pos, self.Spells.R.range, 1, Draw.Color(255, 000, 255, 000))
+			end
+			if KoreanMechanics.Draw.QCD:Value() and Ready(_Q) then
+			Draw.Text("Q Ready ^^", 20, textPos.x - 80, textPos.y + 40, Draw.Color(255, 000, 255, 000)) 
+			end
 		end
 	end
-end
 end
 
 class "Brand"
@@ -2081,7 +2160,7 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 			end
 			if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
 				if target.valid and not target.isImmortal and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
-					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  				local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 					if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and Ready(_Q) then
 						Control.CastSpell(HK_Q, Qpos)
 					end
@@ -2089,7 +2168,7 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 			end
 			if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
 				if target.valid and target.distance <= 1.1 * self.Spells.W.range then
-					local WPos = target:GetPrediction(self.Spells.W.speed, self.Spells.W.delay)
+  				local WPos = GetPred(target, self.Spells.W.speed, 0.30 + Game.Latency()/1000)
 					if WPos and GetDistance(WPos,myHero.pos) < self.Spells.W.range and Ready(_W) then
 						Control.CastSpell(HK_W, WPos)
 					end
@@ -2097,14 +2176,14 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 			end
 		elseif ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
 				if target.valid and not target.isImmortal and target.distance <= 1.1 * self.Spells.W.range then
-					local WPos = target:GetPrediction(self.Spells.W.speed, self.Spells.W.delay)
+  				local WPos = GetPred(target, self.Spells.W.speed, 0.30 + Game.Latency()/1000)
 					if WPos and GetDistance(WPos,myHero.pos) < self.Spells.W.range and Ready(_W) then
 						Control.CastSpell(HK_W, WPos)
 					end
 				end
 				if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
 					if target.valid and not target.isImmortal  and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
-					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  					local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 						if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and Ready(_Q) then
 							Control.CastSpell(HK_Q, Qpos)
 						end
@@ -2118,7 +2197,7 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 		else
 			if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
 				if target.valid and not target.isImmortal  and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
-					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  				local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 					if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and Ready(_Q) then
 						Control.CastSpell(HK_Q, Qpos)
 					end
@@ -2168,7 +2247,7 @@ local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
 			end
 			if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
 				if target.valid and not target.isImmortal  and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
-					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  					local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 					if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and Ready(_Q) then
 						Control.CastSpell(HK_Q, Qpos)
 					end
@@ -2176,7 +2255,7 @@ local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
 			end
 			if HarassW and Ready(_W) and (myHero.mana/myHero.maxMana >= HarassWMana / 100) then
 				if target.valid and not target.isImmortal  and target.distance <= 1.1 * self.Spells.W.range then
-					local WPos = target:GetPrediction(self.Spells.W.speed, self.Spells.W.delay)
+  				local WPos = GetPred(target, self.Spells.W.speed, 0.30 + Game.Latency()/1000)
 					if WPos and GetDistance(WPos,myHero.pos) < self.Spells.W.range and Ready(_W) then
 						Control.CastSpell(HK_W, WPos)
 					end
@@ -2184,14 +2263,14 @@ local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
 			end
 		elseif HarassW and Ready(_W) and (myHero.mana/myHero.maxMana >= HarassWMana / 100) then
 				if target.valid and not target.isImmortal  and target.distance <= 1.1 * self.Spells.W.range then
-					local WPos = target:GetPrediction(self.Spells.W.speed, self.Spells.W.delay)
+  				local WPos = GetPred(target, self.Spells.W.speed, 0.30 + Game.Latency()/1000)
 					if WPos and GetDistance(WPos,myHero.pos) < self.Spells.W.range and Ready(_W) then
 						Control.CastSpell(HK_W, WPos)
 					end
 				end
 				if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
 					if target.valid and not target.isImmortal and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
-					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  					local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 						if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and Ready(_Q) then
 							Control.CastSpell(HK_Q, Qpos)
 						end
@@ -2205,7 +2284,7 @@ local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
 		else
 			if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
 				if target.valid and not target.isImmortal  and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
-					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  					local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 					if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and Ready(_Q) then
 						Control.CastSpell(HK_Q, Qpos)
 					end
@@ -2221,7 +2300,7 @@ local KSI = KoreanMechanics.KS.I:Value()
 		if KoreanMechanics.KS.Q:Value() and Ready(_Q) and target.valid and target.distance <= 1.1 * self.Spells.Q.range then
 			if getdmg("Q", target, myHero) > target.health then
 				if target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
-					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+  					local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
 					if QPos and GetDistance(QPos,myHero.pos) < self.Spells.Q.range then
 						Control.CastSpell(HK_Q, QPos)
 					end
@@ -2230,7 +2309,7 @@ local KSI = KoreanMechanics.KS.I:Value()
 		end
 		if KoreanMechanics.KS.W:Value() and Ready(_W) and target.valid and target.distance <= 1.1 * self.Spells.W.range then
 			if getdmg("W", target, myHero) > target.health then
-				local WPos = target:GetPrediction(self.Spells.W.speed, self.Spells.W.delay)
+  				local WPos = GetPred(target, self.Spells.W.speed, 0.30 + Game.Latency()/1000)
 				if WPos and GetDistance(WPos,myHero.pos) < self.Spells.W.range then
 					Control.CastSpell(HK_W, WPos)
 				end
