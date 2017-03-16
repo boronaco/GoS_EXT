@@ -272,8 +272,8 @@ elseif lvl == nil then return 1
 end
 
 function GetBrandRdmg()
-local target = GOS:GetTarget(1500)
-	if target == nil then return end
+local target = _G.SDK.TargetSelector:GetTarget(2000)
+    if target == nil then return end
 	if target then
 local lvl = GetBrandRlvl()
 	if level == nil then return 1 
