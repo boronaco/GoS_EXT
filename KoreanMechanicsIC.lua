@@ -2054,11 +2054,10 @@ end
 function Brand:Tick()
 	if myHero.dead then return end
 
-	local target = GOS:GetTarget(1500)
-
-	if target and GOS.GetMode() == "Combo" then
+	local target =  _G.SDK.TargetSelector:GetTarget(2000)
+	if target and _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] then
 		self:Combo(target)
-	elseif target and GOS.GetMode() == "Harass" then
+	elseif target and _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_HARASS] then
 		self:Harass(target)
 	end
 	self:KS()
