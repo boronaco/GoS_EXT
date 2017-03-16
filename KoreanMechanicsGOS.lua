@@ -2035,6 +2035,7 @@ function Brand:Menu()
 	KoreanMechanics.KS:MenuElement({id = "W", name = "Use W to KS", value = true})
 	KoreanMechanics.KS:MenuElement({id = "E", name = "Use E to KS", value = true})
 	KoreanMechanics.KS:MenuElement({id = "R", name = "Use R to KS", value = true})
+	KoreanMechanics.KS:MenuElement({id = "I", name = "Use Ignite to KS", value = true, leftIcon = "http://static.lolskill.net/img/spells/32/14.png"})	
 	KoreanMechanics.KS:MenuElement({id = "Mana", name = "Min. Mana to KillSteal(%)", value = 20, min = 0, max = 100, step = 1})	
 
 	KoreanMechanics.Draw:MenuElement({id = "Enabled", name = "Enable Drawings", value = true})	
@@ -2214,6 +2215,7 @@ local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
 end
 
 function Brand:KS()
+local KSI = KoreanMechanics.KS.I:Value()
 	for i = 1, Game.HeroCount() do
 		local target = Game.Hero(i)
 		if KoreanMechanics.KS.Q:Value() and Ready(_Q) and target.valid and target.distance <= 1.1 * self.Spells.Q.range then
@@ -2244,6 +2246,16 @@ function Brand:KS()
 				Control.CastSpell(HK_R, target)
 			end
 		end
+    	if KSI and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) and not Ready(_Q) and not Ready(_W)  and not Ready(_R)  then
+			if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
+				Control.CastSpell(HK_SUMMONER_1, target)
+			end
+		end
+		if KSI and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) and not Ready(_Q) and not Ready(_W)  and not Ready(_R)  then
+			if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
+				Control.CastSpell(HK_SUMMONER_2, target)
+			end
+		end		
 	end
 end
 
