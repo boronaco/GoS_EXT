@@ -383,6 +383,10 @@ function Ahri:Menu()
 	KoreanMechanics.Harass:MenuElement({id = "E", name = "Use E", value = true, leftIcon = "http://static.lolskill.net/img/abilities/64/Ahri_Charm.png"})
 	KoreanMechanics.Harass:MenuElement({id = "Mana", name = "Min. Mana for Harass(%)", value = 40, min = 0, max = 100, step = 1})
 
+	KoreanMechanics.Clear:MenuElement({id = "Q", name = "Use Q", value = true, leftIcon = "http://static.lolskill.net/img/abilities/64/Ahri_OrbofDeception.png"})
+	KoreanMechanics.Clear:MenuElement({id = "QC", name = "Min amount of minions to Q", value = 3, min = 1, max = 7, step = 1})
+	KoreanMechanics.Clear:MenuElement({id = "Mana", name = "Min Mana to Clear (%)", value = 40, min = 0, max = 100, step = 1})	
+
  --	KoreanMechanics.KS:MenuElement({id = "AutoE", name = "Use auto Charm", value = true})
 	KoreanMechanics.KS:MenuElement({id = "ON", name = "Enable KillSteal", value = true})
 	KoreanMechanics.KS:MenuElement({id = "Q", name = "Use Q to KS", value = true})
@@ -408,6 +412,8 @@ function Ahri:Tick()
 		self:Combo(target)
 	elseif target and GOS.GetMode() == "Harass" then
 		self:Harass(target)
+	elseif GOS:GetMode() == "Clear" then
+		self:Clear()
 	end
 	self:KS()
 end
@@ -531,6 +537,29 @@ if (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.Mana:Value() / 100) the
 		end
 	end
 end
+
+function Ahri:Clear()
+local ClearQ = KoreanMechanics.Clear.Q:Value()
+local ClearQC = KoreanMechanics.Clear.QC:Value()
+local ClearMana = KoreanMechanics.Clear.Mana:Value()
+local GetEnemyMinions = GetEnemyMinions()
+local Minions = nil
+		for i = 1, #GetEnemyMinions do
+	local Minions = GetEnemyMinions[i]
+	local Count = MinionsAround(Minions.pos, 500, Minions.team)
+		if (myHero.mana/myHero.maxMana >= ClearMana / 100) then
+			if ClearQ and Ready(_Q) then
+			local QPos = GetPred(Minions, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
+				if QPos and Count >= ClearQC then
+					Control.CastSpell(HK_Q, QPos)
+				end
+			end
+		end
+	end
+end
+
+
+
 
 function Ahri:KS()
 local target = GOS:GetTarget(2000)
