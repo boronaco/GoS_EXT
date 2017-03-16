@@ -1,4 +1,4 @@
-local KoreanChamps = {"Ahri", "Blitzcrank", "Darius", "Diana", "KogMaw"}
+local KoreanChamps = {"Ahri", "Brand", "Blitzcrank", "Darius", "Diana", "KogMaw"}
 if not table.contains(KoreanChamps, myHero.charName)  then print("" ..myHero.charName.. " Is Not (Yet) Supported") return end
 
 local KoreanMechanics = MenuElement({type = MENU, id = "KoreanMechanics", name = "Korean Mechanics Reborn | " ..myHero.charName, leftIcon = "http://4.1m.yt/d5VbDBm.png"})
@@ -263,7 +263,26 @@ local Range = (({0, 1200, 1500, 1800})[level])
 	return Range 
 end
 
+function GetBrandRlvl()
+local lvl = myHero:GetSpellData(_R).level
+	if lvl >= 1 then
+		return (lvl + 1)
+elseif lvl == nil then return 1
+	end
+end
 
+function GetBrandRdmg()
+local target = GOS:GetTarget(1500)
+	if target == nil then return end
+	if target then
+local lvl = GetBrandRlvl()
+	if level == nil then return 1 
+	end
+local AP = myHero.ap
+local Rdmg = CalcMagicalDamage(myHero.target, ((0.25 * AP) + (({0, 100, 200, 300})[level])))
+	return Rdmg
+	end
+end 
 
 
 require("DamageLib")
@@ -1947,6 +1966,289 @@ end
 
 
 function Blitzcrank:Draw()
+	if not myHero.dead then
+		if KoreanMechanics.Draw.Enabled:Value() then 
+			if KoreanMechanics.Draw.Q:Value() then
+			Draw.Circle(myHero.pos, self.Spells.Q.range, 1, Draw.Color(255, 52, 221, 221))
+			end
+			if KoreanMechanics.Draw.W:Value() then
+			Draw.Circle(myHero.pos, self.Spells.W.range, 1, Draw.Color(255, 255, 255, 255))
+			end
+			if KoreanMechanics.Draw.E:Value() then
+			Draw.Circle(myHero.pos, self.Spells.E.range, 1, Draw.Color(255, 255, 0, 128))
+			end
+			if KoreanMechanics.Draw.R:Value() then
+			Draw.Circle(myHero.pos, self.Spells.R.range, 1, Draw.Color(255, 000, 255, 000))
+		end
+	end
+end
+end
+
+class "Brand"
+
+function Brand:__init()
+	print("Korean Mechanics Reborn | Brand Loaded")
+	self.Icons =  { Q = "http://static.lolskill.net/img/abilities/64/BrandQ.png",
+				  	W = "http://static.lolskill.net/img/abilities/64/BrandW.png",
+				  	E = "http://static.lolskill.net/img/abilities/64/BrandE.png",
+				  	R = "http://static.lolskill.net/img/abilities/64/BrandR.png"}
+	self.Spells = {
+		Q = {range = 1050, delay = 0.25, speed = 1530,  width = 75},
+		W = {range = 900, delay = 0.30, speed = math.huge,  width = 187},
+		E = {range = 625, delay = 0.25, speed = math.huge},
+		R = {range = 750, delay = 0.25, speed = math.huge}
+	}
+	self:Menu()
+	Callback.Add("Tick", function() self:Tick() end)
+	Callback.Add("Draw", function() self:Draw() end)
+end
+
+function Brand:Menu()
+	KoreanMechanics.Combo:MenuElement({id = "Q", name = "Use Q", value = true, leftIcon = self.Icons.Q})
+	KoreanMechanics.Combo:MenuElement({id = "W", name = "Use W", value = true, leftIcon = self.Icons.W})
+	KoreanMechanics.Combo:MenuElement({id = "E", name = "Use E", value = true, leftIcon = self.Icons.E})
+	KoreanMechanics.Combo:MenuElement({id = "R", name = "Use R", value = true, leftIcon = self.Icons.R})
+	KoreanMechanics.Combo:MenuElement({type = MENU, id = "RS",  name = "R Settings"})
+	KoreanMechanics.Combo.RS:MenuElement({id = "RE", name = "Min Amount of Enemy's to R", value = 2, min = 1, max = 5, step = 1})
+	KoreanMechanics.Combo.RS:MenuElement({id = "RKillable", name = "Use Smart-R on Killable", value = true})
+	KoreanMechanics.Combo.RS:MenuElement({id = "RON", name = "Enable custom R Settings", value = false})
+	KoreanMechanics.Combo.RS:MenuElement({id = "RFAST", name = "Use R when target HP%", value = 50, min = 0, max = 100, step = 1})		
+	KoreanMechanics.Combo:MenuElement({id = "I", name = "Use Ignite", value = true, leftIcon = "http://static.lolskill.net/img/spells/32/14.png"})	
+	KoreanMechanics.Combo:MenuElement({id = "ION", name = "Enable custom Ignite Settings", value = false})
+	KoreanMechanics.Combo:MenuElement({id = "IFAST", name = "Use Ignite when target HP%", value = 50, min = 0, max = 100, step = 1})	
+	KoreanMechanics.Combo:MenuElement({type = MENU, id = "MM", name = "Mana Manager"}) 
+	KoreanMechanics.Combo.MM:MenuElement({id = "QMana", name = "Min Mana to Q in Combo(%)", value = 10, min = 0, max = 100, step = 1, leftIcon = self.Icons.Q})
+	KoreanMechanics.Combo.MM:MenuElement({id = "WMana", name = "Min Mana to W in Combo(%)", value = 10, min = 0, max = 100, step = 1, leftIcon = self.Icons.W})
+	KoreanMechanics.Combo.MM:MenuElement({id = "EMana", name = "Min Mana to E in Combo(%)", value = 10, min = 0, max = 100, step = 1, leftIcon = self.Icons.E})
+	KoreanMechanics.Combo.MM:MenuElement({id = "RMana", name = "Min Mana to R in Combo(%)", value = 10, min = 0, max = 100, step = 1, leftIcon = self.Icons.R})
+
+	KoreanMechanics.Harass:MenuElement({id = "Q", name = "Use Q", value = true, leftIcon = self.Icons.Q})
+	KoreanMechanics.Harass:MenuElement({id = "W", name = "Use W", value = true, leftIcon = self.Icons.W})
+	KoreanMechanics.Harass:MenuElement({id = "E", name = "Use E", value = true, leftIcon = self.Icons.E})
+	KoreanMechanics.Harass:MenuElement({type = MENU, id = "MM", name = "Mana Manager"})
+	KoreanMechanics.Harass.MM:MenuElement({id = "QMana", name = "Min Mana to Q in Harass(%)", value = 40, min = 0, max = 100, step = 1, leftIcon = self.Icons.Q})
+	KoreanMechanics.Harass.MM:MenuElement({id = "WMana", name = "Min Mana to W in Harass(%)", value = 40, min = 0, max = 100, step = 1, leftIcon = self.Icons.W})
+	KoreanMechanics.Harass.MM:MenuElement({id = "EMana", name = "Min Mana to E in Harass(%)", value = 40, min = 0, max = 100, step = 1, leftIcon = self.Icons.E})	
+
+	KoreanMechanics.KS:MenuElement({id = "ON", name = "Enable KillSteal", value = true})
+	KoreanMechanics.KS:MenuElement({id = "Q", name = "Use Q to KS", value = true})
+	KoreanMechanics.KS:MenuElement({id = "W", name = "Use W to KS", value = true})
+	KoreanMechanics.KS:MenuElement({id = "E", name = "Use E to KS", value = true})
+	KoreanMechanics.KS:MenuElement({id = "R", name = "Use R to KS", value = true})
+	KoreanMechanics.KS:MenuElement({id = "Mana", name = "Min. Mana to KillSteal(%)", value = 20, min = 0, max = 100, step = 1})	
+
+	KoreanMechanics.Draw:MenuElement({id = "Enabled", name = "Enable Drawings", value = true})	
+	KoreanMechanics.Draw:MenuElement({id = "Q", name = "Draw Q", value = true, leftIcon = self.Icons.Q})
+	KoreanMechanics.Draw:MenuElement({id = "W", name = "Draw W", value = true, leftIcon = self.Icons.W})
+	KoreanMechanics.Draw:MenuElement({id = "E", name = "Draw E", value = true, leftIcon = self.Icons.E})
+	KoreanMechanics.Draw:MenuElement({id = "R", name = "Draw R", value = true, leftIcon = self.Icons.R})
+end
+
+function Brand:Tick()
+	if myHero.dead then return end
+
+	local target = GOS:GetTarget(1500)
+
+	if target and GOS.GetMode() == "Combo" then
+		self:Combo(target)
+	elseif target and GOS.GetMode() == "Harass" then
+		self:Harass(target)
+	end
+	self:KS()
+end
+
+function Brand:Combo(target)
+local ComboQ = KoreanMechanics.Combo.Q:Value()
+local ComboW = KoreanMechanics.Combo.W:Value()
+local ComboE = KoreanMechanics.Combo.E:Value()
+local ComboR = KoreanMechanics.Combo.R:Value() 
+local ComboRE = KoreanMechanics.Combo.RS.RE:Value()
+local RKillable = KoreanMechanics.Combo.RS.RKillable:Value()
+local ComboRON = KoreanMechanics.Combo.RS.RON:Value()
+local ComboRFAST = KoreanMechanics.Combo.RS.RFAST:Value()
+local Rdmg = GetBrandRdmg()
+local ComboI = KoreanMechanics.Combo.I:Value()
+local ComboION = KoreanMechanics.Combo.ION:Value()
+local ComboIFAST = KoreanMechanics.Combo.IFAST:Value()
+local ComboQMana = KoreanMechanics.Combo.MM.QMana:Value()
+local ComboWMana = KoreanMechanics.Combo.MM.WMana:Value()
+local ComboEMana = KoreanMechanics.Combo.MM.EMana:Value()
+local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
+		if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
+			if IsValidTarget(target, self.Spells.E.range, true, myHero) and Ready(_E) then
+				Control.CastSpell(HK_E, target)
+			end
+			if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
+				if target.valid and not target.isImmortal and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
+					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+					if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and Ready(_Q) then
+						Control.CastSpell(HK_Q, Qpos)
+					end
+				end
+			end
+			if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
+				if target.valid and target.distance <= 1.1 * self.Spells.W.range then
+					local WPos = target:GetPrediction(self.Spells.W.speed, self.Spells.W.delay)
+					if WPos and GetDistance(WPos,myHero.pos) < self.Spells.W.range and Ready(_W) then
+						Control.CastSpell(HK_W, WPos)
+					end
+				end
+			end
+		elseif ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
+				if target.valid and not target.isImmortal and target.distance <= 1.1 * self.Spells.W.range then
+					local WPos = target:GetPrediction(self.Spells.W.speed, self.Spells.W.delay)
+					if WPos and GetDistance(WPos,myHero.pos) < self.Spells.W.range and Ready(_W) then
+						Control.CastSpell(HK_W, WPos)
+					end
+				end
+				if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
+					if target.valid and not target.isImmortal  and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
+					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+						if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and Ready(_Q) then
+							Control.CastSpell(HK_Q, Qpos)
+						end
+					end
+				end
+				if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
+					if IsValidTarget(target, self.Spells.E.range, true, myHero) and Ready(_E) then
+						Control.CastSpell(HK_E, target)
+					end
+				end
+		else
+			if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
+				if target.valid and not target.isImmortal  and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
+					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+					if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and Ready(_Q) then
+						Control.CastSpell(HK_Q, Qpos)
+					end
+				end
+			end
+		end
+		if ComboR and Ready(_R) and RKillable and not ComboRON and (myHero.mana/myHero.maxMana >= ComboRMana / 100) and GetEnemyCount(1000) >= ComboRE then
+			if IsValidTarget(target, self.Spells.R.range, true, myHero) and Rdmg * 1.1 >= target.health then 
+				Control.CastSpell(HK_R, target)
+			end
+		else
+			if ComboR and Ready(_R) and RKillable and ComboRON and (myHero.mana/myHero.maxMana >= ComboRMana / 100) and GetEnemyCount(1000) >= ComboRE then
+				if IsValidTarget(target, self.Spells.R.range, true, myHero) and (target.health / target.maxHealth) <= (ComboRFAST / 100) then
+					Control.CastSpell(HK_R, target)
+				end
+			end
+		end
+		if ComboI and ComboION and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) then
+			if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= ComboIFAST then
+				Control.CastSpell(HK_SUMMONER_1, target)
+			end
+		elseif ComboI and ComboION and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) then
+			if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= ComboIFAST then
+				Control.CastSpell(HK_SUMMONER_2, target)
+			end
+		elseif ComboI and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) and not Ready(_Q) and not Ready(_W) and not Ready(_E) and not Ready(_R) then
+			if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health then
+				Control.CastSpell(HK_SUMMONER_1, target)
+			end
+		elseif ComboI and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) and not Ready(_Q) and not Ready(_W) and not Ready(_E) and not Ready(_R)  then
+			if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health then
+				Control.CastSpell(HK_SUMMONER_2, target)
+			end
+		end
+end
+
+function Brand:Harass(target)
+local HarassQ = KoreanMechanics.Harass.Q:Value()
+local HarassW = KoreanMechanics.Harass.W:Value()
+local HarassE = KoreanMechanics.Harass.E:Value()
+local HarassQMana = KoreanMechanics.Harass.MM.QMana:Value()
+local HarassWMana = KoreanMechanics.Harass.MM.WMana:Value()
+local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
+		if HarassE and Ready(_E) and (myHero.mana/myHero.maxMana >= HarassEMana / 100) then
+			if IsValidTarget(target, self.Spells.E.range, true, myHero) and Ready(_E) then
+				Control.CastSpell(HK_E, target)
+			end
+			if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
+				if target.valid and not target.isImmortal  and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
+					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+					if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and Ready(_Q) then
+						Control.CastSpell(HK_Q, Qpos)
+					end
+				end
+			end
+			if HarassW and Ready(_W) and (myHero.mana/myHero.maxMana >= HarassWMana / 100) then
+				if target.valid and not target.isImmortal  and target.distance <= 1.1 * self.Spells.W.range then
+					local WPos = target:GetPrediction(self.Spells.W.speed, self.Spells.W.delay)
+					if WPos and GetDistance(WPos,myHero.pos) < self.Spells.W.range and Ready(_W) then
+						Control.CastSpell(HK_W, WPos)
+					end
+				end
+			end
+		elseif HarassW and Ready(_W) and (myHero.mana/myHero.maxMana >= HarassWMana / 100) then
+				if target.valid and not target.isImmortal  and target.distance <= 1.1 * self.Spells.W.range then
+					local WPos = target:GetPrediction(self.Spells.W.speed, self.Spells.W.delay)
+					if WPos and GetDistance(WPos,myHero.pos) < self.Spells.W.range and Ready(_W) then
+						Control.CastSpell(HK_W, WPos)
+					end
+				end
+				if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
+					if target.valid and not target.isImmortal and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
+					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+						if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and Ready(_Q) then
+							Control.CastSpell(HK_Q, Qpos)
+						end
+					end
+				end
+				if HarassE and Ready(_E) and (myHero.mana/myHero.maxMana >= HarassEMana / 100) then
+					if IsValidTarget(target, self.Spells.E.range, true, myHero) and Ready(_E) then
+						Control.CastSpell(HK_E, target)
+					end
+				end
+		else
+			if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
+				if target.valid and not target.isImmortal  and target.distance <= 1.1 * self.Spells.Q.range and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
+					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+					if Qpos and GetDistance(Qpos,myHero.pos) < self.Spells.Q.range and Ready(_Q) then
+						Control.CastSpell(HK_Q, Qpos)
+					end
+				end
+			end
+		end
+end
+
+function Brand:KS()
+	for i = 1, Game.HeroCount() do
+		local target = Game.Hero(i)
+		if KoreanMechanics.KS.Q:Value() and Ready(_Q) and target.valid and target.distance <= 1.1 * self.Spells.Q.range then
+			if getdmg("Q", target, myHero) > target.health then
+				if target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 then
+					local Qpos = target:GetPrediction(self.Spells.Q.speed, self.Spells.Q.delay)
+					if QPos and GetDistance(QPos,myHero.pos) < self.Spells.Q.range then
+						Control.CastSpell(HK_Q, QPos)
+					end
+				end
+			end
+		end
+		if KoreanMechanics.KS.W:Value() and Ready(_W) and target.valid and target.distance <= 1.1 * self.Spells.W.range then
+			if getdmg("W", target, myHero) > target.health then
+				local WPos = target:GetPrediction(self.Spells.W.speed, self.Spells.W.delay)
+				if WPos and GetDistance(WPos,myHero.pos) < self.Spells.W.range then
+					Control.CastSpell(HK_W, WPos)
+				end
+			end
+		end
+		if KoreanMechanics.KS.E:Value() and Ready(_E) and IsValidTarget(target, self.Spells.E.range, true, myHero) then
+			if getdmg("E", target, myHero) > target.health then
+				Control.CastSpell(HK_E, target)
+			end
+		end
+		if KoreanMechanics.KS.R:Value() and Ready(_R) and IsValidTarget(target, self.Spells.R.range, true, myHero) then
+			if GetBrandRdmg() > target.health then
+				Control.CastSpell(HK_R, target)
+			end
+		end
+	end
+end
+
+
+function Brand:Draw()
 	if not myHero.dead then
 		if KoreanMechanics.Draw.Enabled:Value() then 
 			if KoreanMechanics.Draw.Q:Value() then
