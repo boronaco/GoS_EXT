@@ -2338,7 +2338,7 @@ local KSI = KoreanMechanics.KS.I:Value()
 				end
 			end
 		end
-		if KoreanMechanics.KS.W:Value() and Ready(_W) and target.valid and target.distance <= 1.1 * self.Spells.W.range then
+		if KoreanMechanics.KS.W:Value() and Ready(_W) and target.isEnemy and not target.isDead and target.isTargetable and target.valid and target.distance <= 1.1 * self.Spells.W.range then
 			if getdmg("W", target, myHero) > target.health then
   				local WPos = GetPred(target, self.Spells.W.speed, 0.30 + Game.Latency()/1000)
 				if WPos and GetDistance(WPos,myHero.pos) < self.Spells.W.range then
