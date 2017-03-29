@@ -1852,7 +1852,7 @@ function Blitzcrank:__init()
 				  	E = "http://static.lolskill.net/img/abilities/64/Blitzcrank_PowerFist.png",
 				  	R = "http://static.lolskill.net/img/abilities/64/Blitzcrank_StaticField.png"}
 	self.Spells = {
-		Q = {range = 925, delay = 0.25, speed = 1800,  width = 100},
+		Q = {range = KoreanMechanics.Combo.QR:Value(), delay = 0.25, speed = 1800,  width = 100},
 		W = {delay = 0.25, speed = math.huge}, 
 		E = {range = 300, delay = 0.25, speed = math.huge},
 		R = {range = 600, delay = 0.25, speed = math.huge},
@@ -1866,6 +1866,7 @@ end
 function Blitzcrank:Menu()
 
 	KoreanMechanics.Combo:MenuElement({id = "Q", name = "Use Q", value = true, leftIcon = self.Icons.Q})
+	KoreanMechanics.Combo:MenuElement({id = "QR", name = "Q range limiter", value = 900, min = 0, max = 925, step = 25})
 	KoreanMechanics.Combo:MenuElement({id = "WA", name = "Use W", value = true, leftIcon = self.Icons.W})
 	KoreanMechanics.Combo:MenuElement({id = "WR", name = "W when target distance", value = 1500, min = 0, max = 2500, step = 100})
 	KoreanMechanics.Combo:MenuElement({id = "E", name = "Use E", value = true, leftIcon = self.Icons.E})
