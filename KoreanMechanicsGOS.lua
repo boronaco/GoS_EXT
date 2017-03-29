@@ -1851,7 +1851,7 @@ function Blitzcrank:__init()
 				  	E = "http://static.lolskill.net/img/abilities/64/Blitzcrank_PowerFist.png",
 				  	R = "http://static.lolskill.net/img/abilities/64/Blitzcrank_StaticField.png"}
 	self.Spells = {
-		Q = {range = KoreanMechanics.Combo.QR:Value(), delay = 0.25, speed = 1800,  width = 100},
+		Q = {range = 925, delay = 0.25, speed = 1800,  width = 100},
 		W = {delay = 0.25, speed = math.huge}, 
 		E = {range = 300, delay = 0.25, speed = math.huge},
 		R = {range = 600, delay = 0.25, speed = math.huge},
@@ -1940,9 +1940,9 @@ local ComboWMana = KoreanMechanics.Combo.MM.WMana:Value()
 local ComboEMana = KoreanMechanics.Combo.MM.EMana:Value()
 local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 	if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-		if target.valid and Ready(_Q) and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 and target.distance <= 1.1 * self.Spells.Q.range and KoreanMechanics.Combo.W[target.charName]:Value() then
+		if target.valid and Ready(_Q) and target:GetCollision(self.Spells.Q.width, self.Spells.Q.speed, self.Spells.Q.delay) == 0 and target.distance <= 1.1 * KoreanMechanics.Combo.QR:Value() and KoreanMechanics.Combo.W[target.charName]:Value() then
   		local Qpos = GetPred(target, self.Spells.Q.speed, 0.25 + Game.Latency()/1000)
-			if Qpos and GetDistance(Qpos,myHero.pos) <  self.Spells.Q.range then
+			if Qpos and GetDistance(Qpos,myHero.pos) < KoreanMechanics.Combo.QR:Value() then
         		Control.CastSpell(HK_Q, Qpos)
      		end
 		end
