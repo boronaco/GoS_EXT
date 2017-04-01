@@ -127,7 +127,7 @@ local function GetMode()
 		return EOW:Mode()
 	elseif _G.GOS and GOS.GetMode() then
 		return GOS.GetMode()
-	elseif _G.SDK.Orbwalker then
+	elseif _G.SDK and _G.SDK.Orbwalker then
 		if _G.SDK.Orbwalker and _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] then
 			return "Combo"
 		elseif _G.SDK.Orbwalker and _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_HARASS] then
