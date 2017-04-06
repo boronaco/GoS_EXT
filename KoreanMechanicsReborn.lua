@@ -124,9 +124,9 @@ return  math.sqrt(math.pow((p2.x - p1.x),2) + math.pow((p2.y - p1.y),2))
 end
 
 local function GetMode()
-	if _G.EOWLoaded and EOW:Mode() then
+	if _G.EOWLoaded then
 		return EOW:Mode()
-	elseif _G.GOS and GOS.GetMode() then
+	elseif _G.GOS then
 		return GOS.GetMode()
 	elseif _G.SDK and _G.SDK.Orbwalker then
 		if _G.SDK.Orbwalker and _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] then
