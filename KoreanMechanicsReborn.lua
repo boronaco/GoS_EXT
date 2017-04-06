@@ -724,6 +724,7 @@ end
 function KogMaw:Menu()
 	KoreanMechanics.Combo:MenuElement({id = "Q", name = "Use Q", value = true})
 	KoreanMechanics.Combo:MenuElement({id = "W", name = "Use W", value = true})
+	KoreanMechanics.Combo:MenuElement({id = "WR", name = "Max range to cast W (default = 750)", value = 750, min = 300, max = 1500, step = 50})
 	KoreanMechanics.Combo:MenuElement({id = "E", name = "Use E", value = true})
 	KoreanMechanics.Combo:MenuElement({type = MENU, id = "RS", name = "R Settings"})
 	KoreanMechanics.Combo.RS:MenuElement({id = "R", name = "Use R", value = true})
@@ -848,36 +849,22 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 				end
 			end
 			if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-				if KoreanCanCast(_W) then
+				if target.distance <= KoreanMechanics.Combo.WR:Value() then
 					KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 				end
 			end
-		elseif ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
-				if KoreanCanCast(_E) then
-					KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
-				end
-				if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-					if KoreanCanCast(_Q) then
-						KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
-					end
-				end
-				if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-					if KoreanCanCast(_W) then
-						KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
-					end
-				end
 		elseif ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
 				if KoreanCanCast(_Q) then
 					KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
 				end
 				if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-					if KoreanCanCast(_W) then
+					if target.distance <= KoreanMechanics.Combo.WR:Value() then
 						KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 					end
 				end
 		else
 			if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-				if KoreanCanCast(_W) then
+				if target.distance <= KoreanMechanics.Combo.WR:Value() then
 					KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 				end
 			end
@@ -889,7 +876,7 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
 			end
 			if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-				if KoreanCanCast(_W) then
+				if target.distance <= KoreanMechanics.Combo.WR:Value() then
 					KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 				end
 			end
@@ -903,7 +890,7 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
 			end
 			if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-				if KoreanCanCast(_W) then
+				if target.distance <= KoreanMechanics.Combo.WR:Value() then
 					KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 				end
 			end
@@ -913,7 +900,7 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 				end
 			end
 	elseif ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-			if KoreanCanCast(_W) then
+			if target.distance <= KoreanMechanics.Combo.WR:Value() then
 				KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 			end
 			if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
@@ -1025,7 +1012,7 @@ function KogMaw:Draw()
 	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].range, KoreanMechanics.Draw.QD.Width:Value(), KoreanMechanics.Draw.QD.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.WD.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range, KoreanMechanics.Draw.WD.Width:Value(), KoreanMechanics.Draw.WD.Color:Value())
+	            Draw.Circle(myHero.pos, KoreanMechanics.Combo.WR:Value(), KoreanMechanics.Draw.WD.Width:Value(), KoreanMechanics.Draw.WD.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.ED.Enabled:Value() then
 	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_E).name)].range, KoreanMechanics.Draw.ED.Width:Value(), KoreanMechanics.Draw.ED.Color:Value())
