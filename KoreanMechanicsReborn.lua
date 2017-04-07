@@ -13,35 +13,7 @@ local function Ready(spell)
 	return myHero:GetSpellData(spell).currentCd == 0 and myHero:GetSpellData(spell).level > 0 and myHero:GetSpellData(spell).mana <= myHero.mana
 end
 
-function CountAlliesInRange(point, range)
-	if type(point) ~= "userdata" then error("{CountAlliesInRange}: bad argument #1 (vector expected, got "..type(point)..")") end
-	local range = range == nil and math.huge or range 
-	if type(range) ~= "number" then error("{CountAlliesInRange}: bad argument #2 (number expected, got "..type(range)..")") end
-	local n = 0
-	for i = 1, Game.HeroCount() do
-		local unit = Game.Hero(i)
-		if unit.isAlly and not unit.isMe and IsValidTarget(unit, range, false, point) then
-			n = n + 1
-		end
-	end
-	return n
-end
-
-local function CountEnemiesInRange(point, range)
-	if type(point) ~= "userdata" then error("{CountEnemiesInRange}: bad argument #1 (vector expected, got "..type(point)..")") end
-	local range = range == nil and math.huge or range 
-	if type(range) ~= "number" then error("{CountEnemiesInRange}: bad argument #2 (number expected, got "..type(range)..")") end
-	local n = 0
-	for i = 1, Game.HeroCount() do
-		local unit = Game.Hero(i)
-		if IsValidTarget(unit, range, true, point) then
-			n = n + 1
-		end
-	end
-	return n
-end
-
-function GetTarget(range)
+local function GetTarget(range)
 	local tts = nil
 	local G = 0
 	for i = 1,Game.HeroCount()  do
@@ -58,7 +30,7 @@ function GetTarget(range)
 end
 
 local _AllyHeroes
-function GetAllyHeroes()
+local function GetAllyHeroes()
 	if _AllyHeroes then return _AllyHeroes end
 	_AllyHeroes = {}
 	for i = 1, Game.HeroCount() do
@@ -71,7 +43,7 @@ function GetAllyHeroes()
 end
 
 local _EnemyHeroes
-function GetEnemyHeroes()
+local function GetEnemyHeroes()
 	if _EnemyHeroes then return _EnemyHeroes end
 	_EnemyHeroes = {}
 	for i = 1, Game.HeroCount() do
@@ -83,17 +55,17 @@ function GetEnemyHeroes()
 	return _EnemyHeroes
 end
 
-function GetPercentHP(unit)
+local function GetPercentHP(unit)
 	if type(unit) ~= "userdata" then error("{GetPercentHP}: bad argument #1 (userdata expected, got "..type(unit)..")") end
 	return 100*unit.health/unit.maxHealth
 end
 
-function GetPercentMP(unit)
+local function GetPercentMP(unit)
 	if type(unit) ~= "userdata" then error("{GetPercentMP}: bad argument #1 (userdata expected, got "..type(unit)..")") end
 	return 100*unit.mana/unit.maxMana
 end
 
-function GetBuffData(unit, buffname)
+local function GetBuffData(unit, buffname)
 	for i = 0, unit.buffCount do
 		local buff = unit:GetBuff(i)
 		if buff.name == buffname and buff.count > 0 then 
@@ -114,13 +86,13 @@ local function GetBuffs(unit)
 	return t
 end
 
+local sqrt = math.sqrt 
 local function GetDistance(p1,p2)
-	return  math.sqrt(math.pow((p2.x - p1.x),2) + math.pow((p2.y - p1.y),2) + math.pow((p2.z - p1.z),2))
+	return sqrt((p2.x - p1.x)*(p2.x - p1.x) + (p2.y - p1.y)*(p2.y - p1.y) + (p2.z - p1.z)*(p2.z - p1.z))
 end
 
-
 local function GetDistance2D(p1,p2)
-return  math.sqrt(math.pow((p2.x - p1.x),2) + math.pow((p2.y - p1.y),2))
+	return sqrt((p2.x - p1.x)*(p2.x - p1.x) + (p2.y - p1.y)*(p2.y - p1.y))
 end
 
 local function GetMode()
@@ -141,7 +113,7 @@ local function GetMode()
 	end
 end
 
-function HasBuff(unit, buffname)
+local function HasBuff(unit, buffname)
 	if type(unit) ~= "userdata" then error("{HasBuff}: bad argument #1 (userdata expected, got "..type(unit)..")") end
 	if type(buffname) ~= "string" then error("{HasBuff}: bad argument #2 (string expected, got "..type(buffname)..")") end
 	for i, buff in pairs(GetBuffs(unit)) do
@@ -152,7 +124,7 @@ function HasBuff(unit, buffname)
 	return false
 end
 
-function IsImmobileTarget(unit)
+local function IsImmobileTarget(unit)
 	for i = 0, unit.buffCount do
 		local buff = unit:GetBuff(i)
 		if buff and (buff.type == 5 or buff.type == 11 or buff.type == 29 or buff.type == 24 or buff.name == "recall") and buff.count > 0 then
@@ -162,7 +134,7 @@ function IsImmobileTarget(unit)
 	return false	
 end
 
- _G.ItemHotKey = {
+local ItemHotKey = {
     [ITEM_1] = HK_ITEM_1,
     [ITEM_2] = HK_ITEM_2,
     [ITEM_3] = HK_ITEM_3,
@@ -171,7 +143,7 @@ end
     [ITEM_6] = HK_ITEM_6,
 }
 
-function GetItemSlot(unit, id)
+local function GetItemSlot(unit, id)
   for i = ITEM_1, ITEM_7 do
     if unit:GetItemData(i).itemID == id then
       return i
@@ -180,7 +152,7 @@ function GetItemSlot(unit, id)
   return 0 
 end
 
-function IsImmune(unit)
+local function IsImmune(unit)
 	if type(unit) ~= "userdata" then error("{IsImmune}: bad argument #1 (userdata expected, got "..type(unit)..")") end
 	for i, buff in pairs(GetBuffs(unit)) do
 		if (buff.name == "KindredRNoDeathBuff" or buff.name == "UndyingRage") and GetPercentHP(unit) <= 10 then
@@ -193,15 +165,10 @@ function IsImmune(unit)
 	return false
 end
 
-function IsValidTarget(unit, range, checkTeam, from)
-	local range = range == nil and math.huge or range
-	if type(range) ~= "number" then error("{IsValidTarget}: bad argument #2 (number expected, got "..type(range)..")") end
-	if type(checkTeam) ~= "nil" and type(checkTeam) ~= "boolean" then error("{IsValidTarget}: bad argument #3 (boolean or nil expected, got "..type(checkTeam)..")") end
-	if type(from) ~= "nil" and type(from) ~= "userdata" then error("{IsValidTarget}: bad argument #4 (vector or nil expected, got "..type(from)..")") end
-	if unit == nil or not unit.valid or not unit.visible or unit.dead or not unit.isTargetable or IsImmune(unit) or (checkTeam and unit.isAlly) then 
-		return false 
-	end 
-	return unit.pos:DistanceTo(from.pos and from.pos or myHero.pos) < range 
+function IsValidTarget(unit, range, onScreen)
+    local range = range or 20000
+    
+    return unit and unit.distance <= range and not unit.dead and unit.valid and unit.visible and unit.isTargetable and not (onScreen and not unit.pos2D.onScreen)
 end
 
 local _OnVision = {}
@@ -262,7 +229,7 @@ local function GetPred(unit,speed,delay)
 	end
 end
 
-function GetEnemyMinions(range)
+local function GetEnemyMinions(range)
     EnemyMinions = {}
     for i = 1, Game.MinionCount() do
         local Minion = Game.Minion(i)
@@ -273,7 +240,7 @@ function GetEnemyMinions(range)
     return EnemyMinions
 end
 
-function MinionsAround(pos, range, team)
+local function MinionsAround(pos, range, team)
 	local Count = 0
 	for i = 1, Game.MinionCount() do
 		local m = Game.Minion(i)
@@ -284,51 +251,41 @@ function MinionsAround(pos, range, team)
 	return Count
 end
 
-function GetEnemyCount(range) --sofie <33
-    local count = 0
-    for i=1,Game.HeroCount() do
-        local hero = Game.Hero(i)
-        if hero.team ~= myHero.team then
-            count = count + 1
+local _EnemyHeroes
+local function GetEnemyHeroes()
+    if _EnemyHeroes then return _EnemyHeroes end
+    _EnemyHeroes = {}
+    for i = 1, Game.HeroCount() do
+        local unit = Game.Hero(i)
+        if unit.isEnemy then
+            _EnemyHeroes[#_EnemyHeroes + 1] = unit
         end
     end
-    return count
+    return _EnemyHeroes
 end
 
-function EnemysAround(pos, range, team)
-	local Count = 0
-	for i = 1, Game.HeroCount() do
-		local e = Game.Hero(i)
-		if e and e.team == team and not e.dead and GetDistance(pos, e.pos) <= range then
-			Count = Count + 1
-		end
-	end
-	return Count
+local function GetEnemesInRange(range, unit)
+    local unit = unit or myHero
+    local Enemies = GetEnemyHeroes()
+    local inRange = {}
+
+    for i = 1, #Enemies do
+        local Enemy = Enemies[i]
+
+        if GetDistance(unit, Enemy) <= range then
+            inRange[#inRange + 1] = Enemy
+        end
+    end
+
+    return inRange
 end
 
-function GetRlvl()
+local function GetRlvl()
 local lvl = myHero:GetSpellData(_R).level
 	if lvl >= 1 then
 		return (lvl + 1)
 elseif lvl == nil then return 1
 	end
-end
-
-function GetKogRange()
-local level = GetRlvl()
-	if level == nil then return 1
-	end
-local Range = (({0, 1200, 1500, 1800})[level])
-	return Range 
-end
-
-function KogMawRStacks() --Trus credit 
-	for K, Buff in pairs(GetBuffs(myHero)) do
-		if Buff.name:lower() == "kogmawlivingartillerycost" then
-			return Buff.count
-		end
-	end
-	return 0
 end
 
 require "Collision"
@@ -361,7 +318,7 @@ _G.Spells = {
             ["KogMawQ"] = {delay = 0.25, range = 1175, speed = 1600, width = 80, skillshot = true, collision = true},
             ["KogMawBioArcaneBarrage"] = {delay = 0.25, range = 700, skillshot = false, collision = false},
             ["KogMawVoidOoze"] = {delay = 0.25, range = 1200, speed = 1000, width = 120, skillshot = true, collision = false},
-            ["KogMawLivingArtillery"] = {delay = 1, range = GetKogRange(), speed = math.huge, skillshot = true, collision = false}},
+            ["KogMawLivingArtillery"] = {delay = 1, range = 2000, speed = math.huge, skillshot = true, collision = false}},
 
         ["Blitzcrank"] = {
             ["targetvalue"] = 1000,
@@ -379,109 +336,48 @@ _G.Spells = {
 
 }
 --KoreanCast
-local SpellCollision = Collision:SetSpell(Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)].range, Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)].delay ,Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)].speed, Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)].width, true)
-
 function KoreanCanCast(spell)
 local target = GetTarget(Spells[myHero.charName][targetvalue])
+local spellname = Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)]
     if target == nil then return end
-    local Range = Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)].range * 0.95 or math.huge
-        if Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)].skillshot == true and Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)].collision == true then 
-            if Ready(spell) and IsValidTarget(target, Range , true, myHero) then 
-                if not SpellCollision:__GetCollision(myHero, target, 5) then
-                    return true
-                end
+    local Range = spellname.range * 0.95 or math.huge
+    if spellname.skillshot == true and spellname.collision == true then 
+        if IsValidTarget(target, Range , true) then 
+            if not spellname.spellColl:__GetCollision(myHero, target, 5) then
+                return true
             end
         end
-        if  Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)].collision == false then
-            return Ready(spell) and IsValidTarget(target, Range, true, myHero) 
-        end
+    end
+    if spellname.collision == false then
+        return IsValidTarget(target, Range, true) 
+    end
 end 
 
 function KoreanPred(target, spell)
-local pos = GetPred(target, Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)].speed, Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)].delay + Game.Latency()/1000)
-    if pos and GetDistance(pos,myHero.pos) < Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)].range then 
+local spellname = Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)]
+local pos = GetPred(target, spellname.speed, spellname.delay + Game.Latency()/1000)
+    if pos and GetDistance(pos,myHero.pos) < spellname.range then 
       return pos
     end
 end     
 
+local isKCasting = false
 function KoreanCast(spell, pos, delay)
-    local Cursor = Game.mousePos()
-    if pos == nil then return end
+    if pos == nil or isKCasting == true then return end
+    isKCasting = true
+    local cursorReset = mousePos
+    GOS.BlockMovement = true
+    DelayAction(function()
         Control.SetCursorPos(pos)
-        DelayAction(function() Control.KeyDown(spell) end,0.01) 
-        DelayAction(function() Control.KeyUp(spell) end, (delay + Game.Latency()) / 1000)
-end 
-
-function HaveDianaBuff(unit)
-    for i = 0, unit.buffCount do
-        local buff = unit:GetBuff(i)
-        if buff and buff.name == "dianamoonlight" and buff.count > 0 then
-            return true
-        end
-    end
-    return false
+        Control.KeyDown(spell) 
+        end,0.01) 
+    DelayAction(function() 
+        Control.KeyUp(spell)
+        Control.SetCursorPos(cursorReset)
+        GOS.BlockMovement = false
+        isKCasting = false
+        end, (delay + Game.Latency()) / 1000)
 end
-
-function PrintBuffs(unit)
-    for i = 0, unit.buffCount do
-        local Buff = unit:GetBuff(i)
-        if Buff.count > 0 then
-            print(Buff.name)
-        end
-    end
-end
-
-function HaveBrandBuff(unit)
-    for i = 0, unit.buffCount do
-        local buff = unit:GetBuff(i)
-        if buff and buff.name == "BrandAblaze" and buff.count > 0 and Game.Timer() <  buff.expireTime then
-            return buff.count
-        end
-    end
-    return false
-end
-
-
-function RStacks(unit)
-    if not unit then print("nounit") return 0 end
-    for i = 0, unit.buffCount do
-        local buff = unit:GetBuff(i)
-        local Counter = buff.count
-        if buff.name == "DariusHemo" and  buff.count > 0 then
-            return Counter
-        end
-    end
-    return 0
-end
-
-function GetDariusRdmg()
-local target = GetTarget(1000)
-    if target == nil then return end
-local level = GetRlvl()
-    if level == nil then return 1 
-    end
-local Stacks = (RStacks(target) + 1)
-	if Stacks >= 4 then
-	  AD = myHero.totalDamage
-	else  AD = myHero.bonusDamage
-	end
-
-local basedmg = (({0, 100, 200, 300})[level] + (0.75 * AD))
-local stacksdmg = (  (({0, 100, 200, 300})[level]) * ((({0, 0.2, 0.4, 0.6, 0.8, 1})[Stacks]) ) )
-local Rdmg =  ((basedmg + stacksdmg) + (60 * (({0, 0.2, 0.4, 0.6, 0.8, 1})[Stacks]))) --CalcPhysicalDamage(myHero, target, ((basedmg + stacksdmg)))
-    return Rdmg
-end
-
-function GetBrandRdmg()
-local target = GetTarget(1100)
-    if target == nil then return end
-local lvl = GetRlvl()
-    if level == nil then return 1 
-    end
-local AP = myHero.ap
-local Rdmg = CalcMagicalDamage(myHero.target, ((0.25 * AP) + (({0, 100, 200, 300})[level])))
-    return Rdmg
-end 
 
 class "Ahri"
 
@@ -490,6 +386,8 @@ function Ahri:__init()
     self:Menu()
     Callback.Add("Draw", function() self:Draw() end)
     Callback.Add("Tick", function() self:Tick() end)
+    local _AhriE = Spells["Ahri"]["AhriSeduce"]
+	_AhriE.spellColl = Collision:SetSpell(_AhriE.range, _AhriE.speed, _AhriE.delay, _AhriE.width, true)
 end
 
 function Ahri:Menu()
@@ -552,8 +450,8 @@ end
 
 function Ahri:Tick()
     if myHero.dead then return end
-    local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
-    if target and GetMode() == "Combo" then
+    local target = GetTarget(1500)
+    if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
         self:Harass(target)
@@ -563,75 +461,66 @@ function Ahri:Tick()
 end
 
 function Ahri:Combo()
-local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
+local target = GetTarget(1500)
     if target == nil then return end	
-local ComboQ = KoreanMechanics.Combo.Q:Value()
-local ComboW = KoreanMechanics.Combo.W:Value()
-local ComboE = KoreanMechanics.Combo.E:Value()
-local ComboR = KoreanMechanics.Combo.RS.R:Value() 
-local ComboRHP = KoreanMechanics.Combo.RS.RHP:Value()
-local ComboI = KoreanMechanics.Combo.IS.I:Value()
-local ComboIHP = KoreanMechanics.Combo.IS.IHP:Value()	
-local ComboQMana = KoreanMechanics.Combo.MM.QMana:Value()
-local ComboWMana = KoreanMechanics.Combo.MM.WMana:Value()
-local ComboEMana = KoreanMechanics.Combo.MM.EMana:Value()
-local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
-    if ComboR and Ready(_R) and target.distance < KoreanMechanics.Combo.RS.RD:Value() and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then
-        if target.valid and not target.Dead and target.health/target.maxHealth <= ComboRHP/100 then
+    if KoreanMechanics.Combo.RS.R:Value() and Ready(_R) and target.distance < KoreanMechanics.Combo.RS.RD:Value() and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then
+        if target.valid and not target.Dead and target.health/target.maxHealth <= KoreanMechanics.Combo.RS.RHP:Value()/100 then
             KoreanCast(HK_R, Game.mousePos(), KoreanMechanics.AS.RAS:Value())
         end
     end
-    if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
+    if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
         if KoreanCanCast(_E) then 
             KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
         end
-        if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
+        if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
             if KoreanCanCast(_Q) then
                 KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
             end
         end
-        if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-            if KoreanCanCast(_W) then
-                KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
-            end
-        end
-    elseif ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-            if KoreanCanCast(_Q) then
-                KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
-            end
-            if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-                if KoreanCanCast(_W) then
-                    KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
-                end
-            end
-    else
-        if ComboW and Ready(_W) then
+        if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
             if KoreanCanCast(_W) then
                 KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
             end
         end
     end
-   	if ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) then
-        if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= ComboIHP/100 then
-            Control.CastSpell(HK_SUMMONER_1, target)
+    if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
+        if KoreanCanCast(_Q) then
+            KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
         end
-	elseif ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) then
-        if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= ComboIHP/100 then
-            Control.CastSpell(HK_SUMMONER_2, target)
-       	 end
-	elseif ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 1 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) and not Ready(_Q) and not Ready(_R) then
-       	 if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
-           	Control.CastSpell(HK_SUMMONER_1, target)
-       	 end
-	elseif ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 1  and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) and not Ready(_Q) and not Ready(_R) then
-       	 if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
-           	Control.CastSpell(HK_SUMMONER_2, target)
+        if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
+            if KoreanCanCast(_W) then
+               KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
+            end
         end
-    end 
+    end
+    if KoreanMechanics.Combo.W:Value() and Ready(_W) then
+        if KoreanCanCast(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
+            KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
+        end
+    end
+   	if KoreanMechanics.Combo.IS.I:Value() then 
+   		if KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) then
+       		if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= KoreanMechanics.Combo.IS.IHP:Value()/100 then
+            	Control.CastSpell(HK_SUMMONER_1, target)
+       		end
+		elseif  KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) then
+        	if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= KoreanMechanics.Combo.IS.IHP:Value()/100 then
+           		 Control.CastSpell(HK_SUMMONER_2, target)
+       		end
+		elseif  KoreanMechanics.Combo.IS.IMode:Value() == 1 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) and not Ready(_Q) and not Ready(_R) then
+       	 	if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
+           		Control.CastSpell(HK_SUMMONER_1, target)
+       	 	end
+		elseif KoreanMechanics.Combo.IS.IMode:Value() == 1  and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) and not Ready(_Q) and not Ready(_R) then
+       		 if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
+           		Control.CastSpell(HK_SUMMONER_2, target)
+        	end
+    	end 
+    end
 end
 
 function Ahri:Harass()
-local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
+local target = GetTarget(1500)
     if target == nil then return end	
 local HarassQ = KoreanMechanics.Harass.Q:Value()
 local HarassW = KoreanMechanics.Harass.W:Value() 
@@ -639,34 +528,34 @@ local HarassE = KoreanMechanics.Harass.E:Value()
 local HarassQMana = KoreanMechanics.Harass.MM.QMana:Value()
 local HarassWMana = KoreanMechanics.Harass.MM.WMana:Value()
 local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
-	if HarassE and Ready(_E) and (myHero.mana/myHero.maxMana >= HarassEMana / 100) then
+	if KoreanMechanics.Harass.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.EMana:Value() / 100) then
 		if KoreanCanCast(_E) then
 			KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
 		end
-		if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
+		if KoreanMechanics.Harass.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.QMana:Value() / 100) then
 			if KoreanCanCast(_Q) then
 				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
 			end
 		end
-		if HarassW and Ready(_W) and (myHero.mana/myHero.maxMana >= HarassWMana / 100) then
+		if KoreanMechanics.Harass.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.WMana:Value() / 100) then
 			if KoreanCanCast(_W) then
 				KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 			end
 		end
-	elseif HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
-			if KoreanCanCast(_Q) then
-				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
-			end
-			if HarassW and Ready(_W) and (myHero.mana/myHero.maxMana >= HarassWMana / 100) then
-				if KoreanCanCast(_W) then
-					KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
-				end
-			end
-	else
-		if HarassW and Ready(_W) and (myHero.mana/myHero.maxMana >= HarassWMana / 100) then
+	end
+	if KoreanMechanics.Harass.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.QMana:Value() / 100) then
+		if KoreanCanCast(_Q) then
+			KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
+		end
+		if KoreanMechanics.Harass.W:Value()  and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.WMana:Value() / 100) then
 			if KoreanCanCast(_W) then
 				KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 			end
+		end
+	end
+	if KoreanMechanics.Harass.W:Value()  and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.WMana:Value() / 100) then
+		if KoreanCanCast(_W) then
+			KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 		end
 	end
 end
@@ -679,9 +568,9 @@ local Minions = nil
 	if ClearQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ClearMana / 100) then
 		for i = 1, #GetEnemyMinions do
 		local Minions = GetEnemyMinions[i]
-		local Count = MinionsAround(Minions.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].range , Minions.team)
-			if Count >= KoreanMechanics.Clear.QC:Value() and Minions.distance <= Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].range then
-			local Rpos = Minions:GetPrediction(Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].speed, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].delay)
+		local Count = MinionsAround(Minions.pos, Spells["Ahri"]["AhriOrbofDeception"].range , Minions.team)
+			if Count >= KoreanMechanics.Clear.QC:Value() and Minions.distance <= Spells["Ahri"]["AhriOrbofDeception"].range then
+			local Rpos = Minions:GetPrediction(Spells["Ahri"]["AhriOrbofDeception"].speed, Spells["Ahri"]["AhriOrbofDeception"].delay)
 				KoreanCast(HK_Q, Rpos, KoreanMechanics.AS.QAS:Value())
 			end
 		end
@@ -692,13 +581,13 @@ function Ahri:Draw()
     if not myHero.dead then
     	if KoreanMechanics.Draw.Enabled:Value() then
 	        if KoreanMechanics.Draw.QD.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].range, KoreanMechanics.Draw.QD.Width:Value(), KoreanMechanics.Draw.QD.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Ahri"]["AhriOrbofDeception"].range, KoreanMechanics.Draw.QD.Width:Value(), KoreanMechanics.Draw.QD.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.WD.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range, KoreanMechanics.Draw.WD.Width:Value(), KoreanMechanics.Draw.WD.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Ahri"]["AhriFoxFire"].range, KoreanMechanics.Draw.WD.Width:Value(), KoreanMechanics.Draw.WD.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.ED.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_E).name)].range, KoreanMechanics.Draw.ED.Width:Value(), KoreanMechanics.Draw.ED.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Ahri"]["AhriSeduce"].range, KoreanMechanics.Draw.ED.Width:Value(), KoreanMechanics.Draw.ED.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.RD.Enabled:Value() then
 	            Draw.Circle(myHero.pos, KoreanMechanics.Combo.RS.RD:Value(), KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
@@ -719,6 +608,8 @@ function KogMaw:__init()
 	self:Menu()
 	Callback.Add("Tick", function() self:Tick() end)
 	Callback.Add("Draw", function() self:Draw() end)
+	local _KogMawQ = Spells["KogMaw"]["KogMawQ"]
+	_KogMawQ.spellColl = Collision:SetSpell(_KogMawQ.range, _KogMawQ.speed, _KogMawQ.delay, _KogMawQ.width, true)	
 end
 
 function KogMaw:Menu()
@@ -792,8 +683,8 @@ end
 
 function KogMaw:Tick()
 	if myHero.dead then return end
-    local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
-    if target and GetMode() == "Combo" then
+    local target = GetTarget(KogMaw:GetKogRange())
+    if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
         self:Harass(target)
@@ -802,131 +693,129 @@ function KogMaw:Tick()
 	end
 end
 
+function KogMaw:GetKogRange()
+local level = GetRlvl()
+	if level == nil then return 1
+	end
+local Range = (({0, 1200, 1500, 1800})[level])
+	return Range 
+end
+
+ function KogMaw:KogMawRStacks() --Trus credit 
+	for K, Buff in pairs(GetBuffs(myHero)) do
+		if Buff.name:lower() == "kogmawlivingartillerycost" then
+			return Buff.count
+		end
+	end
+	return 0
+end
+
 function KogMaw:Combo()
-local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
+local target = GetTarget(KogMaw:GetKogRange())
     if target == nil then return end	
-local ComboQ = KoreanMechanics.Combo.Q:Value()
-local ComboW = KoreanMechanics.Combo.W:Value()
-local ComboE = KoreanMechanics.Combo.E:Value()
-local ComboR = KoreanMechanics.Combo.RS.R:Value()
-local ComboRHP = KoreanMechanics.Combo.RS.RHP:Value()
-local ComboRR = KoreanMechanics.Combo.RS.RR:Value()
-local ComboRST = KoreanMechanics.Combo.RS.RST:Value()
-local ComboMode = KoreanMechanics.Combo.Mode:Value()
-local ComboYG = KoreanMechanics.Combo.IT.YG:Value()
-local ComboYGR = KoreanMechanics.Combo.IT.YGR:Value()
-local ComboBC = KoreanMechanics.Combo.IT.BC:Value()
-local ComboBCHP = KoreanMechanics.Combo.IT.BCHP:Value()
-local ComboBOTRK = KoreanMechanics.Combo.IT.BOTRK:Value()
-local ComboBOTRKHP = KoreanMechanics.Combo.IT.BOTRKHP:Value()
-local ComboQMana = KoreanMechanics.Combo.MM.QMana:Value()
-local ComboWMana = KoreanMechanics.Combo.MM.WMana:Value()
-local ComboEMana = KoreanMechanics.Combo.MM.EMana:Value()
-local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
-	if ComboYG and GetItemSlot(myHero, 3142) >= 1 then 
-		if Ready(GetItemSlot(myHero, 3142)) and target.distance <= ComboYGR  then 
+	if KoreanMechanics.Combo.IT.YG:Value() and GetItemSlot(myHero, 3142) >= 1 then 
+		if Ready(GetItemSlot(myHero, 3142)) and target.distance <= KoreanMechanics.Combo.IT.YGR:Value()  then 
 			Control.CastSpell(ItemHotKey[GetItemSlot(myHero, 3142)], target)
 		end 
 	end
-	if ComboBC and GetItemSlot(myHero, 3144) >= 1 then 
-		if target.valid and Ready(GetItemSlot(myHero, 3144)) and target.health/target.maxHealth <= ComboBC/100 and target.distance < 550 then 
+	if KoreanMechanics.Combo.IT.BC:Value() and GetItemSlot(myHero, 3144) >= 1 then 
+		if target.valid and Ready(GetItemSlot(myHero, 3144)) and target.health/target.maxHealth <= KoreanMechanics.Combo.IT.BCHP:Value()/100 and target.distance < 550 then 
 			Control.CastSpell(ItemHotKey[GetItemSlot(myHero, 3144)], target)
 		end
 	end
-	if ComboBOTRK and GetItemSlot(myHero, 3153) >= 1 then 
-		if Ready(GetItemSlot(myHero, 3153)) and target.health/target.maxHealth <= ComboBOTRKHP/100 and target.distance < 550 then 
+	if KoreanMechanics.Combo.IT.BOTRK:Value() and GetItemSlot(myHero, 3153) >= 1 then 
+		if Ready(GetItemSlot(myHero, 3153)) and target.health/target.maxHealth <= KoreanMechanics.Combo.IT.BOTRKHP:Value()/100 and target.distance < 550 then 
 			Control.CastSpell(ItemHotKey[GetItemSlot(myHero, 3153)], target)
 		end
 	end
-	if ComboMode == 1 then
-		if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
+	if KoreanMechanics.Combo.Mode:Value() == 1 then
+		if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
 			if KoreanCanCast(_E) then
 				KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
 			end
-			if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
+			if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
 				if KoreanCanCast(_Q) then
 					KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
 				end
 			end
-			if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-				if target.distance <= KoreanMechanics.Combo.WR:Value() then
-					KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
-				end
-			end
-		elseif ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-				if KoreanCanCast(_Q) then
-					KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
-				end
-				if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-					if target.distance <= KoreanMechanics.Combo.WR:Value() then
-						KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
-					end
-				end
-		else
-			if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
+			if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
 				if target.distance <= KoreanMechanics.Combo.WR:Value() then
 					KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 				end
 			end
 		end
-	end
-	if ComboMode == 2 then
-		if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
+		if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
 			if KoreanCanCast(_Q) then
 				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
 			end
-			if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
+			if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
 				if target.distance <= KoreanMechanics.Combo.WR:Value() then
 					KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 				end
 			end
-			if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
-				if KoreanCanCast(_E) then
-					KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
-				end
-			end
-	elseif ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-			if KoreanCanCast(_Q) then
-				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
-			end
-			if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-				if target.distance <= KoreanMechanics.Combo.WR:Value() then
-					KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
-				end
-			end
-			if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
-				if KoreanCanCast(_E) then
-					KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
-				end
-			end
-	elseif ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
+		end
+		if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
 			if target.distance <= KoreanMechanics.Combo.WR:Value() then
 				KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 			end
-			if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
+		end
+	end
+	if KoreanMechanics.Combo.Mode:Value() == 2 then
+		if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
+			if KoreanCanCast(_Q) then
+				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
+			end
+			if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
+				if target.distance <= KoreanMechanics.Combo.WR:Value() then
+					KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
+				end
+			end
+			if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
 				if KoreanCanCast(_E) then
 					KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
 				end
 			end
-	else
-		if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
+		end
+		if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
+			if KoreanCanCast(_Q) then
+				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
+			end
+			if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
+				if target.distance <= KoreanMechanics.Combo.WR:Value() then
+					KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
+				end
+			end
+			if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
+				if KoreanCanCast(_E) then
+					KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
+				end
+			end
+		end
+		if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
+			if target.distance <= KoreanMechanics.Combo.WR:Value() then
+				KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
+			end
+			if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
+				if KoreanCanCast(_E) then
+					KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
+				end
+			end
+		end
+		if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
 			if KoreanCanCast(_E) then
 				KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
 			end
 		end
 	end
-	end
-	if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then
-		if IsValidTarget(target, GetKogRange() , true, myHero) and (target.health/target.maxHealth) <= (ComboRHP/100) and (KogMawRStacks() + 1) <= ComboRST then
-			if target.distance >= ComboRR and target.distance < 1200 then
-				if not KoreanCanCast(_E) and not KoreanCanCast(_Q) or not ComboE and ComboQ then
+	if KoreanMechanics.Combo.RS.R:Value() and Ready(_R) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then
+		if IsValidTarget(target, KogMaw:GetKogRange(), true, myHero) and (target.health/target.maxHealth) <= (KoreanMechanics.Combo.RS.RHP:Value()/100) and (KogMaw:KogMawRStacks() + 1) <= KoreanMechanics.Combo.RS.RST:Value() then
+			if target.distance >= KoreanMechanics.Combo.RS.RR:Value() and target.distance < 1200 then
 				local Rpos = GetPred(target, Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].speed, Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].delay + Game.Latency()/1000)	
 					if Rpos then 		
 						KoreanCast(HK_R, Rpos, KoreanMechanics.AS.RAS:Value())
 					end
-				end
 			end
-			if target.distance >= ComboRR and target.distance > 1200 then
+			if target.distance >= KoreanMechanics.Combo.RS.RR:Value() and target.distance > 1200 then
 			local Rpos = GetPred(target, Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].speed, Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].delay + Game.Latency()/1000)	
 				if Rpos and Rpos.onScreen then 		
 					KoreanCast(HK_R, Rpos, KoreanMechanics.AS.RAS:Value())
@@ -937,42 +826,36 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
 end
 
 function KogMaw:Harass()
-local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
+local target = GetTarget(KogMaw:GetKogRange())
     if target == nil then return end	
-local HarassQ = KoreanMechanics.Harass.Q:Value()
-local HarassW = KoreanMechanics.Harass.W:Value()
-local HarassE = KoreanMechanics.Harass.E:Value()
-local HarassQMana = KoreanMechanics.Harass.MM.QMana:Value()
-local HarassWMana = KoreanMechanics.Harass.MM.WMana:Value()
-local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
-	if HarassE and Ready(_E) and (myHero.mana/myHero.maxMana >= HarassEMana / 100) then
+	if KoreanMechanics.Harass.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.EMana:Value() / 100) then
 		if KoreanCanCast(_E) then
 			KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
 		end
-		if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
+		if KoreanMechanics.Harass.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.QMana:Value() / 100) then
 			if KoreanCanCast(_Q) then
 				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
 			end
 		end
-		if HarassW and Ready(_W) and (myHero.mana/myHero.maxMana >= HarassWMana / 100) then
-			if KoreanCanCast(_W) then
+		if KoreanMechanics.Harass.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.WMana:Value() / 100) then
+			if target.distance <= KoreanMechanics.Combo.WR:Value() then
 				KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 			end
 		end
-	elseif HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
-			if KoreanCanCast(_Q) then
-				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
-			end
-			if HarassW and Ready(_W) and (myHero.mana/myHero.maxMana >= HarassWMana / 100) then
-				if KoreanCanCast(_W) then
-					KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
-				end
-			end
-	else
-		if HarassW and Ready(_W) and (myHero.mana/myHero.maxMana >= HarassWMana / 100) then
-			if KoreanCanCast(_W) then
+	end
+	if KoreanMechanics.Harass.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.QMana:Value() / 100) then
+		if KoreanCanCast(_Q) then
+			KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
+		end
+		if KoreanMechanics.Harass.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.WMana:Value() / 100) then
+			if target.distance <= KoreanMechanics.Combo.WR:Value() then
 				KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 			end
+		end
+	end
+	if KoreanMechanics.Harass.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.WMana:Value() / 100) then
+		if target.distance <= KoreanMechanics.Combo.WR:Value() then
+			KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 		end
 	end
 end
@@ -987,8 +870,8 @@ local Minions = nil
 	if ClearW and Ready(_W) and (myHero.mana/myHero.maxMana >= ClearWMana / 100) then 
 		for i = 1, #GetEnemyMinions do
 		local Minions = GetEnemyMinions[i]
-		local Count = MinionsAround(Minions.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range , Minions.team)
-			if Count >= KoreanMechanics.Clear.WC:Value() and Minions.distance <= Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range then
+		local Count = MinionsAround(Minions.pos, Spells["KogMaw"]["KogMawBioArcaneBarrage"].range , Minions.team)
+			if Count >= KoreanMechanics.Clear.WC:Value() and Minions.distance <= KoreanMechanics.Combo.WR:Value() then
 				KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 			end
 		end
@@ -996,9 +879,9 @@ local Minions = nil
 	if ClearR and Ready(_R) and (myHero.mana/myHero.maxMana >= ClearRMana / 100) then
 		for i = 1, #GetEnemyMinions do
 		local Minions = GetEnemyMinions[i]
-		local Count = MinionsAround(Minions.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range , Minions.team)
-			if Count >= KoreanMechanics.Clear.RC:Value() and Minions.distance <= GetKogRange() and Minions.distance > Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range and (KogMawRStacks() + 1) <= KoreanMechanics.Combo.RS.RST:Value() then
-			local Rpos = Minions:GetPrediction(Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].speed, Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].delay)
+		local Count = MinionsAround(Minions.pos, KoreanMechanics.Combo.WR:Value() , Minions.team)
+			if Count >= KoreanMechanics.Clear.RC:Value() and Minions.distance <= KogMaw:GetKogRange() and Minions.distance > Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range and (KogMaw:KogMawRStacks() + 1) <= KoreanMechanics.Combo.RS.RST:Value() then
+			local Rpos = Minions:GetPrediction(Spells["KogMaw"]["KogMawLivingArtillery"].speed, Spells["KogMaw"]["KogMawLivingArtillery"].delay)
 				KoreanCast(HK_R, Rpos, KoreanMechanics.AS.RAS:Value())
 			end
 		end
@@ -1017,8 +900,8 @@ function KogMaw:Draw()
 	        if KoreanMechanics.Draw.ED.Enabled:Value() then
 	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_E).name)].range, KoreanMechanics.Draw.ED.Width:Value(), KoreanMechanics.Draw.ED.Color:Value())
 	        end
-	        if KoreanMechanics.Draw.RD.Enabled:Value() and GetKogRange() > 1 then
-	            Draw.Circle(myHero.pos, GetKogRange() , KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
+	        if KoreanMechanics.Draw.RD.Enabled:Value() and KogMaw:GetKogRange() > 1 then
+	            Draw.Circle(myHero.pos, KogMaw:GetKogRange() , KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
 	        end
 	       	if KoreanMechanics.Draw.CM:Value() then
 	       		local textPos = myHero.pos:To2D()
@@ -1028,11 +911,6 @@ function KogMaw:Draw()
 					Draw.Text("AD Combo Active", 20, textPos.x - 80, textPos.y + 40, Draw.Color(255, 000, 255, 000)) 
 				end
 			end 
-	        local target = GetTarget()
-	        if target == nil then return end
-	            if target then
-	            Draw.Circle(target.pos, 100, KoreanMechanics.Draw.TD.Width:Value(), KoreanMechanics.Draw.TD.Color:Value())
-	        end 
 	    end
     end
 end
@@ -1111,8 +989,8 @@ end
 
 function Diana:Tick()
 	if myHero.dead then return end
-    local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
-    if target and GetMode() == "Combo" then
+    local target = GetTarget(1000)
+    if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
         self:Harass(target)
@@ -1121,127 +999,121 @@ function Diana:Tick()
 	end
 end
 
+function Diana:HaveDianaBuff(unit)
+    for i = 0, unit.buffCount do
+        local buff = unit:GetBuff(i)
+        if buff and buff.name == "dianamoonlight" and buff.count > 0 then
+            return true
+        end
+    end
+    return false
+end
+
 function Diana:Combo()
-local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
+local target = GetTarget(1000)
     if target == nil then return end	
-local ComboQ = KoreanMechanics.Combo.Q:Value()
-local ComboW = KoreanMechanics.Combo.W:Value()
-local ComboE = KoreanMechanics.Combo.E:Value()
-local ComboR = KoreanMechanics.Combo.RS.R:Value() 
-local ComboRHP = KoreanMechanics.Combo.RS.RHP:Value()
-local ComboMode = KoreanMechanics.Combo.Mode:Value()
-local ComboI = KoreanMechanics.Combo.IS.I:Value()
-local ComboIHP = KoreanMechanics.Combo.IS.IHP:Value()	
-local ComboQMana = KoreanMechanics.Combo.MM.QMana:Value()
-local ComboWMana = KoreanMechanics.Combo.MM.WMana:Value()
-local ComboEMana = KoreanMechanics.Combo.MM.EMana:Value()
-local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
-    if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
+    if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
     	if KoreanCanCast(_W) then
     		KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
     	end
-    	if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
+    	if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
     		if KoreanCanCast(_E) then
     			KoreanCast(HK_E, Game.mousePos(), KoreanMechanics.AS.EAS:Value())
     		end
     	end
-    	if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then 
-    		if KoreanCanCast(_Q) then
-    			KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
-    		end
-    	end
-    elseif ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
-    		if KoreanCanCast(_E) then
-    			KoreanCast(HK_E, Game.mousePos(), KoreanMechanics.AS.EAS:Value())
-    		end
-    		if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then 
-    			if KoreanCanCast(_Q) then
-    				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
-    			end
-    		end
-    else
-    	if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then 
+    	if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then 
     		if KoreanCanCast(_Q) then
     			KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
     		end
     	end
     end
-    if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then 
-    	if (target.health/target.maxHealth) <= (ComboRHP/100) and HaveDianaBuff(target) and KoreanCanCast(_R) then
+    if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
+    	if KoreanCanCast(_E) then
+    		KoreanCast(HK_E, Game.mousePos(), KoreanMechanics.AS.EAS:Value())
+    	end
+    	if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then 
+    		if KoreanCanCast(_Q) then
+    			KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
+    		end
+    	end
+    end
+    if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then 
+    	if KoreanCanCast(_Q) then
+    		KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
+    	end
+    end
+    if KoreanMechanics.Combo.RS.R:Value()  and Ready(_R) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then 
+    	if (target.health/target.maxHealth) <= (KoreanMechanics.Combo.RS.RHP:Value()/100) and Diana:HaveDianaBuff(target) and KoreanCanCast(_R) then
     	local pos = target.pos
     		KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
     	end
     end
-    if ComboMode == 2 then
-    	if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then 
-    		if (target.health/target.maxHealth) <= (ComboRHP/100) and HaveDianaBuff(target) and KoreanCanCast(_R) then
+    if KoreanMechanics.Combo.Mode:Value() == 2 then
+    	if KoreanMechanics.Combo.RS.R:Value()  and Ready(_R) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then 
+    		if (target.health/target.maxHealth) <= (KoreanMechanics.Combo.RS.RHP:Value()/100) and Diana:HaveDianaBuff(target) and KoreanCanCast(_R) then
     		local pos = target.pos
     			KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
     		end
    		end
-   		if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then
-   			if not Ready(_Q) and (target.health/target.maxHealth) <= (ComboRHP/100) and KoreanCanCast(_R) then
+   		if KoreanMechanics.Combo.RS.R:Value()  and Ready(_R) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then
+   			if not Ready(_Q) and (target.health/target.maxHealth) <= (KoreanMechanics.Combo.RS.RHP:Value()/100) and KoreanCanCast(_R) then
    				local pos = target.pos
    				KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
    			end
    		end
    	end
-   	if ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) then
-        if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= ComboIHP/100 then
-            Control.CastSpell(HK_SUMMONER_1, target)
-        end
-	elseif ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) then
-        if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= ComboIHP/100 then
-            Control.CastSpell(HK_SUMMONER_2, target)
-       	 end
-	elseif ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 1 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) and not Ready(_Q) and not Ready(_R) then
-       	 if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
-           	Control.CastSpell(HK_SUMMONER_1, target)
-       	 end
-	elseif ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 1  and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) and not Ready(_Q) and not Ready(_R) then
-       	 if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
-           	Control.CastSpell(HK_SUMMONER_2, target)
-        end
-    end 
+   	if KoreanMechanics.Combo.IS.I:Value() then 
+   		if KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) then
+       		if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= KoreanMechanics.Combo.IS.IHP:Value()	/100 then
+            	Control.CastSpell(HK_SUMMONER_1, target)
+       		end
+		elseif  KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) then
+        	if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= KoreanMechanics.Combo.IS.IHP:Value()	/100 then
+           		 Control.CastSpell(HK_SUMMONER_2, target)
+       		end
+		elseif  KoreanMechanics.Combo.IS.IMode:Value() == 1 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) and not Ready(_Q) and not Ready(_R) then
+       	 	if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
+           		Control.CastSpell(HK_SUMMONER_1, target)
+       	 	end
+		elseif KoreanMechanics.Combo.IS.IMode:Value() == 1  and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) and not Ready(_Q) and not Ready(_R) then
+       		 if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
+           		Control.CastSpell(HK_SUMMONER_2, target)
+        	end
+    	end 
+    end
 end
 
 function Diana:Harass()
-local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
+local target = GetTarget(1000)
     if target == nil then return end	
-local HarassQ = KoreanMechanics.Harass.Q:Value()
-local HarassW = KoreanMechanics.Harass.W:Value()
-local HarassE = KoreanMechanics.Harass.E:Value()
-local HarassQMana = KoreanMechanics.Harass.MM.QMana:Value()
-local HarassWMana = KoreanMechanics.Harass.MM.WMana:Value()
-local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
-	if HarassW and Ready(_W) and (myHero.mana/myHero.maxMana >= HarassWMana / 100) then
+	if KoreanMechanics.Harass.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.WMana:Value() / 100) then
 		if KoreanCanCast(_W) then
 			KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 		end
-		if HarassE and Ready(_E) and (myHero.mana/myHero.maxMana >= HarassEMana / 100) then
+		if KoreanMechanics.Harass.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.EMana:Value() / 100) then
 			if KoreanCanCast(_E) then
 				KoreanCast(HK_E, Game.mousePos(), KoreanMechanics.AS.EAS:Value())
 			end
 		end
-		if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
+		if KoreanMechanics.Harass.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.QMana:Value() / 100) then
 			if KoreanCanCast(_Q) then
 				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
 			end
 		end
-	elseif HarassE and Ready(_E) and (myHero.mana/myHero.maxMana >= HarassEMana / 100) then
-			if KoreanCanCast(_E) then
-				KoreanCast(HK_E, Game.mousePos(), KoreanMechanics.AS.EAS:Value())
-			end
-			if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
-				if KoreanCanCast(_Q) then
-					KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
-				end
-			end
-	else
-		if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
+	end
+	if KoreanMechanics.Harass.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.EMana:Value() / 100) then
+		if KoreanCanCast(_E) then
+			KoreanCast(HK_E, Game.mousePos(), KoreanMechanics.AS.EAS:Value())
+		end
+		if KoreanMechanics.Harass.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.QMana:Value() / 100) then
 			if KoreanCanCast(_Q) then
 				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
 			end
+		end
+	end
+	if KoreanMechanics.Harass.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.QMana:Value() / 100) then
+		if KoreanCanCast(_Q) then
+			KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
 		end
 	end
 end	
@@ -1256,9 +1128,9 @@ local Minions = nil
 	if ClearQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ClearQMana / 100) then
 		for i = 1, #GetEnemyMinions do
 		local Minions = GetEnemyMinions[i]
-		local Count = MinionsAround(Minions.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].range , Minions.team)
-			if Count >= KoreanMechanics.Clear.QC:Value() and Minions.distance <= Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].range then
-			local Rpos = Minions:GetPrediction(Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].speed, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].delay)
+		local Count = MinionsAround(Minions.pos, Spells["Diana"]["DianaArc"].range , Minions.team)
+			if Count >= KoreanMechanics.Clear.QC:Value() and Minions.distance <= Spells["Diana"]["DianaArc"].range then
+			local Rpos = Minions:GetPrediction(Spells["Diana"]["DianaArc"].speed, Spells[myHero.charName]["DianaArc"].delay)
 				KoreanCast(HK_Q, Rpos, KoreanMechanics.AS.QAS:Value())
 			end
 		end
@@ -1266,8 +1138,8 @@ local Minions = nil
 	if ClearW and Ready(_W) and (myHero.mana/myHero.maxMana >= ClearWMana / 100) then 
 		for i = 1, #GetEnemyMinions do
 		local Minions = GetEnemyMinions[i]
-		local Count = MinionsAround(Minions.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range , Minions.team)
-			if Count >= KoreanMechanics.Clear.WC:Value() and Minions.distance <= Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range then
+		local Count = MinionsAround(Minions.pos, Spells["Diana"]["DianaOrbs"].range , Minions.team)
+			if Count >= KoreanMechanics.Clear.WC:Value() and Minions.distance <= Spells["Diana"]["DianaOrbs"].range then
 				KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 			end
 		end
@@ -1278,16 +1150,16 @@ function Diana:Draw()
     if not myHero.dead then
     	if KoreanMechanics.Draw.Enabled:Value() then
 	        if KoreanMechanics.Draw.QD.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].range, KoreanMechanics.Draw.QD.Width:Value(), KoreanMechanics.Draw.QD.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Diana"]["DianaArc"].range, KoreanMechanics.Draw.QD.Width:Value(), KoreanMechanics.Draw.QD.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.WD.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range, KoreanMechanics.Draw.WD.Width:Value(), KoreanMechanics.Draw.WD.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Diana"]["DianaOrbs"].range, KoreanMechanics.Draw.WD.Width:Value(), KoreanMechanics.Draw.WD.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.ED.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_E).name)].range, KoreanMechanics.Draw.ED.Width:Value(), KoreanMechanics.Draw.ED.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Diana"]["DianaVortex"].range, KoreanMechanics.Draw.ED.Width:Value(), KoreanMechanics.Draw.ED.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.RD.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].range, KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Diana"]["DianaTeleport"].range, KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
 	        end
 	       	if KoreanMechanics.Draw.CM:Value() then
 	       		local textPos = myHero.pos:To2D()
@@ -1297,11 +1169,6 @@ function Diana:Draw()
 					Draw.Text("Korean Combo Active", 20, textPos.x - 80, textPos.y + 40, Draw.Color(255, 000, 255, 000)) 
 				end
 			end 
-	        local target = GetTarget()
-	        if target == nil then return end
-	            if target then
-	            Draw.Circle(target.pos, 100, KoreanMechanics.Draw.TD.Width:Value(), KoreanMechanics.Draw.TD.Color:Value())
-	        end 
 	    end
     end
 end
@@ -1313,6 +1180,8 @@ function Blitzcrank:__init()
 	self:Menu()
 	Callback.Add("Tick", function() self:Tick() end)
 	Callback.Add("Draw", function() self:Draw() end)
+	local _BlitzQ = Spells["Blitzcrank"]["RocketGrab"]
+	_BlitzQ.spellColl = Collision:SetSpell(_BlitzQ.range, _BlitzQ.speed, _BlitzQ.delay, _BlitzQ.width, true)
 end
 
 function Blitzcrank:Menu()
@@ -1320,10 +1189,6 @@ function Blitzcrank:Menu()
 	KoreanMechanics.Combo:MenuElement({type = MENU, id = "QS", name = "Q Grab Settings"})
 	KoreanMechanics.Combo.QS:MenuElement({id = "Q", name = "Use Q", value = true})
 	KoreanMechanics.Combo.QS:MenuElement({id = "QR", name = "Q range limiter", value = 900, min = 0, max = 925, step = 25})
-	KoreanMechanics.Combo.QS:MenuElement({type = MENU, id = "QWL", name = "Q Whitelist"})	
-	for K, Enemy in pairs(GetEnemyHeroes()) do
-	KoreanMechanics.Combo.QS.QWL:MenuElement({id = Enemy.charName, name = Enemy.charName, value = true})
-	end	
 	KoreanMechanics.Combo:MenuElement({id = "W", name = "Use W", value = true})
 	KoreanMechanics.Combo:MenuElement({id = "WR", name = "W when target distance", value = 1500, min = 0, max = 2500, step = 100})
 	KoreanMechanics.Combo:MenuElement({id = "E", name = "Use E", value = true})
@@ -1343,10 +1208,6 @@ function Blitzcrank:Menu()
     KoreanMechanics.Harass.MM:MenuElement({id = "QMana", name = "Min Mana to Q in Harass(%)", value = 40, min = 0, max = 100, step = 1})
     KoreanMechanics.Harass.MM:MenuElement({id = "WMana", name = "Min Mana to W in Harass(%)", value = 40, min = 0, max = 100, step = 1})
     KoreanMechanics.Harass.MM:MenuElement({id = "EMana", name = "Min Mana to E in Harass(%)", value = 40, min = 0, max = 100, step = 1}) 
-	KoreanMechanics.Harass:MenuElement({type = MENU, id = "W", name = "Q Whitelist"})
-	for K, Enemy in pairs(GetEnemyHeroes()) do
-	KoreanMechanics.Harass.W:MenuElement({id = Enemy.charName, name = Enemy.charName, value = true})
-	end
 
 	KoreanMechanics.Clear:MenuElement({id = "R", name = "Use R", value = true})
 	KoreanMechanics.Clear:MenuElement({id = "RC", name = "Min Amount of Minion's to R", value = 3, min = 1, max = 7, step = 1})
@@ -1382,10 +1243,10 @@ end
 
 function Blitzcrank:Tick()
 	if myHero.dead then return end
-    local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
-    if target and GetMode() == "Combo" then
+    local target = GetTarget(1000)
+    if GetMode() == "Combo" then
         self:Combo(target)
-    elseif target and GetMode() == "Harass" then
+    elseif GetMode() == "Harass" then
         self:Harass(target)
     elseif GOS.GetMode() == "Clear" or GetMode() == "LaneClear" then
 		self:Clear()
@@ -1393,83 +1254,67 @@ function Blitzcrank:Tick()
 end
 
 function Blitzcrank:Combo()
-local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
+local target = GetTarget(1000)
     if target == nil then return end	
-local ComboQ = KoreanMechanics.Combo.QS.Q:Value()
-local ComboQR =  KoreanMechanics.Combo.QS.QR:Value()
-local ComboW = KoreanMechanics.Combo.W:Value()
-local ComboE = KoreanMechanics.Combo.E:Value()
-local ComboR = KoreanMechanics.Combo.R:Value()
-local ComboRE = KoreanMechanics.Combo.RE:Value()
-local ComboQMana = KoreanMechanics.Combo.MM.QMana:Value()
-local ComboWMana = KoreanMechanics.Combo.MM.WMana:Value()
-local ComboEMana = KoreanMechanics.Combo.MM.EMana:Value()
-local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
-	if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-		if KoreanMechanics.Combo.QS.QWL[target.charName]:Value() and target.distance <= KoreanMechanics.Combo.QS.QR:Value() and KoreanCanCast(_Q) then
+	if KoreanMechanics.Combo.QS.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
+		if target.distance <= KoreanMechanics.Combo.QS.QR:Value() and KoreanCanCast(_Q) then
 			KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
 		end
 	end
-	if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then 
+	if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then 
 		if target.distance <= KoreanMechanics.Combo.WR:Value() and KoreanCanCast(_W) then
 			KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 		end
-		if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then 
+		if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then 
 			if KoreanCanCast(_E) then
 			local pos = target.pos
 				KoreanCast(HK_E, pos, KoreanMechanics.AS.EAS:Value())
 			end
 		end
-		if ComboR and Ready(_R) and not Ready(_E) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then
-			if GetEnemyCount(600) >= ComboRE and KoreanCanCast(_R) then
-				if (target:GetCollision(Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].width, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].speed, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].delay) == 1 or not Ready(_Q)) then
+		if KoreanMechanics.Combo.R:Value() and Ready(_R) and not Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then
+			if #GetEnemiesInRange(600) >= KoreanMechanics.Combo.RE:Value() and KoreanCanCast(_R) then
+								if (target:GetCollision(Spells["Blitzcrank"]["RocketGrab"].width, Spells["Blitzcrank"]["RocketGrab"].speed, Spells["Blitzcrank"]["RocketGrab"].delay) == 1 or not Ready(_Q)) then
 					KoreanCast(HK_R, Game.mousePos(), KoreanMechanics.AS.RAS:Value())
 				end
 			end
 		end
-	elseif ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then 
-			if KoreanCanCast(_E) then
-			local pos = target.pos
-				KoreanCast(HK_E, pos, KoreanMechanics.AS.EAS:Value())
-			end
-			if ComboR and Ready(_R) and not Ready(_E) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then
-				if GetEnemyCount(600) >= ComboRE and KoreanCanCast(_R) then
-					if (target:GetCollision(Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].width, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].speed, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].delay) == 1 or not Ready(_Q)) then
-						KoreanCast(HK_R, Game.mousePos(), KoreanMechanics.AS.RAS:Value())
-					end
+	end
+	if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then 
+		if KoreanCanCast(_E) then
+		local pos = target.pos
+			KoreanCast(HK_E, pos, KoreanMechanics.AS.EAS:Value())
+		end
+		if KoreanMechanics.Combo.R:Value() and Ready(_R) and not Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then
+			if #GetEnemiesInRange(600) >= KoreanMechanics.Combo.RE:Value() and KoreanCanCast(_R) then
+				if (target:GetCollision(Spells["Blitzcrank"]["RocketGrab"].width, Spells["Blitzcrank"]["RocketGrab"].speed, Spells["Blitzcrank"]["RocketGrab"].delay) == 1 or not Ready(_Q)) then
+					KoreanCast(HK_R, Game.mousePos(), KoreanMechanics.AS.RAS:Value())
 				end
 			end
-	else
-		if ComboR and Ready(_R) and not Ready(_E) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then
-				if GetEnemyCount(600) >= ComboRE and KoreanCanCast(_R) then
-					if (target:GetCollision(Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].width, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].speed, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].delay) == 1 or not Ready(_Q)) then
-						KoreanCast(HK_R, Game.mousePos(), KoreanMechanics.AS.RAS:Value())
-					end
-				end
+		end
+	end
+	if KoreanMechanics.Combo.R:Value() and Ready(_R) and not Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then
+		if #GetEnemiesInRange(600) >= KoreanMechanics.Combo.RE:Value() and KoreanCanCast(_R) then
+			if (target:GetCollision(Spells["Blitzcrank"]["RocketGrab"].width, Spells["Blitzcrank"]["RocketGrab"].speed, Spells["Blitzcrank"]["RocketGrab"].delay) == 1 or not Ready(_Q)) then
+				KoreanCast(HK_R, Game.mousePos(), KoreanMechanics.AS.RAS:Value())
+			end
 		end
 	end
 end
 
 function Blitzcrank:Harass()
-local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
+local target = GetTarget(1000)
     if target == nil then return end	
-local HarassQ = KoreanMechanics.Harass.Q:Value()
-local HarassW = KoreanMechanics.Harass.WE:Value()
-local HarassE = KoreanMechanics.Harass.E:Value()
-local HarassQMana = KoreanMechanics.Harass.MM.QMana:Value()
-local HarassWMana = KoreanMechanics.Harass.MM.WMana:Value()
-local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
-    if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then 
-    	if KoreanMechanics.Harass.W[target.charName]:Value() and target.distance <= KoreanMechanics.Combo.QS.QR:Value() and KoreanCanCast(_Q) then
+    if KoreanMechanics.Harass.Q:Value()and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.QMana:Value() / 100) then 
+    	if target.distance <= KoreanMechanics.Combo.QS.QR:Value() and KoreanCanCast(_Q) then
     		KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
 		end
 	end
-	if HarassW and Ready(_W) and (myHero.mana/myHero.maxMana >= HarassWMana / 100) then 
+	if KoreanMechanics.Harass.WE:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.WMana:Value() / 100) then 
 		if target.distance <= KoreanMechanics.Harass.WR:Value() and KoreanCanCast(_W) then
 			KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
 		end
 	end
-	if HarassE and Ready(_E) and (myHero.mana/myHero.maxMana >= HarassEMana / 100) then
+	if KoreanMechanics.Harass.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.EMana:Value() / 100) then
 		if KoreanCanCast(_E) then
 			local pos = target.pos
 			KoreanCast(HK_E, pos, KoreanMechanics.AS.EAS:Value())
@@ -1486,7 +1331,7 @@ local Minions = nil
 	if ClearR and Ready(_R) and (myHero.mana/myHero.maxMana >= ClearMana / 100) then
 		for i = 1, #GetEnemyMinions do
 		local Minions = GetEnemyMinions[i]
-		local Count = MinionsAround(Minions.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].range , Minions.team)
+		local Count = MinionsAround(Minions.pos, Spells["Blitzcrank"]["StaticField"].range , Minions.team)
 			if Count >= ClearRC then 
 				KoreanCast(HK_R, Game.mousePos(), KoreanMechanics.AS.RAS:Value())
 			end
@@ -1504,15 +1349,10 @@ function Blitzcrank:Draw()
 	            Draw.Circle(myHero.pos, KoreanMechanics.Combo.WR:Value(), KoreanMechanics.Draw.WD.Width:Value(), KoreanMechanics.Draw.WD.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.ED.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_E).name)].range, KoreanMechanics.Draw.ED.Width:Value(), KoreanMechanics.Draw.ED.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Blitzcrank"]["PowerFist"].range, KoreanMechanics.Draw.ED.Width:Value(), KoreanMechanics.Draw.ED.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.RD.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].range, KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
-	        end 
-	        local target = GetTarget()
-	        if target == nil then return end
-	            if target then
-	            Draw.Circle(target.pos, 100, KoreanMechanics.Draw.TD.Width:Value(), KoreanMechanics.Draw.TD.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Blitzcrank"]["StaticField"].range, KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
 	        end 
 	    end
     end
@@ -1525,6 +1365,8 @@ function Brand:__init()
 	self:Menu()
 	Callback.Add("Tick", function() self:Tick() end)
 	Callback.Add("Draw", function() self:Draw() end)
+	local _BrandQ = Spells["Brand"]["BrandQ"]
+	_BrandQ.spellColl = Collision:SetSpell(_BrandQ.range, _BrandQ.speed, _BrandQ.delay, _BrandQ.width, true)
 end
 
 function Brand:Menu()
@@ -1592,7 +1434,7 @@ end
 function Brand:Tick()
 	if myHero.dead then return end
     local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
-    if target and GetMode() == "Combo" then
+    if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
         self:Harass(target)
@@ -1601,153 +1443,157 @@ function Brand:Tick()
 	end
 end
 
-function Brand:Combo()
-local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
+function Brand:HaveBrandBuff(unit)
+    for i = 0, unit.buffCount do
+        local buff = unit:GetBuff(i)
+        if buff and buff.name == "BrandAblaze" and buff.count > 0 and Game.Timer() <  buff.expireTime then
+            return buff.count
+        end
+    end
+    return false
+end
+
+
+function Brand:GetBrandRdmg()
+local target = GetTarget(1100)
     if target == nil then return end
-local ComboQ = KoreanMechanics.Combo.Q:Value()
-local ComboQM = KoreanMechanics.Combo.QM:Value()
-local ComboW = KoreanMechanics.Combo.W:Value()
-local ComboE = KoreanMechanics.Combo.E:Value()
-local ComboR = KoreanMechanics.Combo.RS.R:Value()
-local ComboRC = KoreanMechanics.Combo.RS.RC:Value()
-local ComboRHP = KoreanMechanics.Combo.RS.RHP:Value()
-local ComboI = KoreanMechanics.Combo.IS.I:Value()
-local ComboIHP = KoreanMechanics.Combo.IS.IHP:Value()
-local ComboQMana = KoreanMechanics.Combo.MM.QMana:Value()
-local ComboWMana = KoreanMechanics.Combo.MM.WMana:Value()
-local ComboEMana = KoreanMechanics.Combo.MM.EMana:Value()
-local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()		
-    	if ComboQM then
-    		if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
-    			if KoreanCanCast(_E) then
-    				local pos = target.pos
-    				KoreanCast(HK_E, pos, KoreanMechanics.AS.EAS:Value())
-    			end
+local lvl = GetRlvl()
+    if level == nil then return 1 
+    end
+local AP = myHero.ap
+local Rdmg = CalcMagicalDamage(myHero.target, ((0.25 * AP) + (({0, 100, 200, 300})[level])))
+    return Rdmg
+end 
+
+function Brand:Combo()
+local target = GetTarget(1100)
+    if target == nil then return end	
+    if KoreanMechanics.Combo.QM:Value() then
+    	if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
+    		if KoreanCanCast(_E) then
+    			local pos = target.pos
+    			KoreanCast(HK_E, pos, KoreanMechanics.AS.EAS:Value())
     		end
-    		if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-    			if KoreanCanCast(_Q) and HaveBrandBuff(target) then
+    	end
+    	if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
+    		if KoreanCanCast(_Q) and Brand:HaveBrandBuff(target) then
+    			KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
+    		end
+    	end
+    	if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
+    		if KoreanCanCast(_W) then 
+    			KoreanCast(HK_W, KoreanPred(target, _W), KoreanMechanics.AS.WAS:Value())
+    		end
+    	end
+    end
+    if not KoreanMechanics.Combo.QM:Value() then
+    	if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
+    		if KoreanCanCast(_E) then
+    		local pos = target.pos
+    			KoreanCast(HK_E, pos, KoreanMechanics.AS.EAS:Value())
+    		end
+    		if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and not KoreanCanCast(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
+    			if KoreanCanCast(_Q) then
     				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
     			end
     		end
-    		if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
+    		if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
     			if KoreanCanCast(_W) then 
     				KoreanCast(HK_W, KoreanPred(target, _W), KoreanMechanics.AS.WAS:Value())
     			end
     		end
     	end
-    	if not ComboQM then
-    		if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
+    	if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
+    		if KoreanCanCast(_W) then 
+    			KoreanCast(HK_W, KoreanPred(target, _W), KoreanMechanics.AS.WAS:Value())
+    		end
+    		if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and not KoreanCanCast(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
+    			if KoreanCanCast(_Q) then
+    				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
+    			end
+    		end
+    		if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
     			if KoreanCanCast(_E) then
     			local pos = target.pos
     				KoreanCast(HK_E, pos, KoreanMechanics.AS.EAS:Value())
     			end
-    			if ComboQ and Ready(_Q) and not KoreanCanCast(_E) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-    				if KoreanCanCast(_Q) then
-    					KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
-    				end
-    			end
-    			if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-    				if KoreanCanCast(_W) then 
-    					KoreanCast(HK_W, KoreanPred(target, _W), KoreanMechanics.AS.WAS:Value())
-    				end
-    			end
-    		elseif ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-    				if KoreanCanCast(_W) then 
-    					KoreanCast(HK_W, KoreanPred(target, _W), KoreanMechanics.AS.WAS:Value())
-    				end
-    				if ComboQ and Ready(_Q) and not KoreanCanCast(_W) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-    					if KoreanCanCast(_Q) then
-    						KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
-    					end
-    				end
-    				if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
-    					if KoreanCanCast(_E) then
-    					local pos = target.pos
-    						KoreanCast(HK_E, pos, KoreanMechanics.AS.EAS:Value())
-    					end
-    				end
-    		else
-    			if ComboQ and Ready(_Q) and not KoreanCanCast(_E) and not KoreanCanCast(_W) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-    				if KoreanCanCast(_Q) then
-    					KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
-    				end
-    			end
     		end
     	end
-    	if KoreanMechanics.Combo.RS.RMode:Value() == 1 then
-    		if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) and GetEnemyCount(1000) >= ComboRC then
-    			if KoreanCanCast(_R) and GetBrandRdmg() * 1.1 >= target.health and HaveBrandBuff(target) then
-    				local pos = target.pos
-    				KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
-    			end
+    	if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and not KoreanCanCast(_E) and not KoreanCanCast(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
+    		if KoreanCanCast(_Q) then
+    			KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
     		end
     	end
-    	if KoreanMechanics.Combo.RS.RMode:Value() == 2 then
-    		if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) and GetEnemyCount(1000) >= ComboRC then
-    			if KoreanCanCast(_R) and target.health/target.maxHealth <= ComboRHP/100 and HaveBrandBuff(target) then
-    				local pos = target.pos
-    				KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
-    			end
+    end
+    if KoreanMechanics.Combo.RS.RMode:Value() == 1 then
+    	if KoreanMechanics.Combo.RS.R:Value() and Ready(_R) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value()	 / 100) and #GetEnemiesInRange(1000) >= KoreanMechanics.Combo.RS.RC:Value() then
+    		if KoreanCanCast(_R) and GetBrandRdmg() * 1.1 >= target.health and Brand:HaveBrandBuff(target) then
+    			local pos = target.pos
+    			KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
     		end
     	end
-    	if ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) then
-	        if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= ComboIHP/100 then
-	            Control.CastSpell(HK_SUMMONER_1, target)
-	        end
-		elseif ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) then
-	        if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= ComboIHP/100 then
-	            Control.CastSpell(HK_SUMMONER_2, target)
-	       	 end
-		elseif ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 1 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) and not Ready(_Q) and not Ready(_R) then
-	       	 if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
-	           	Control.CastSpell(HK_SUMMONER_1, target)
-	       	 end
-		elseif ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 1  and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) and not Ready(_Q) and not Ready(_R) then
-	       	 if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
-	           	Control.CastSpell(HK_SUMMONER_2, target)
-	        end
-	    end 
+    end
+    if KoreanMechanics.Combo.RS.RMode:Value() == 2 then
+    	if KoreanMechanics.Combo.RS.R:Value() and Ready(_R) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value()	 / 100) and #GetEnemiesInRange(1000) >= KoreanMechanics.Combo.RS.RC:Value() then
+    		if KoreanCanCast(_R) and target.health/target.maxHealth <= KoreanMechanics.Combo.RS.RHP:Value()/100 and Brand:HaveBrandBuff(target) then
+    			local pos = target.pos
+    			KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
+    		end
+    	end
+    end
+    if KoreanMechanics.Combo.IS.I:Value() then 
+		if KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) then
+	 		if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= KoreanMechanics.Combo.IS.IHP:Value()/100 then
+	      		Control.CastSpell(HK_SUMMONER_1, target)
+	 		end
+ 		elseif  KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) then
+			if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= KoreanMechanics.Combo.IS.IHP:Value()/100 then
+	   			Control.CastSpell(HK_SUMMONER_2, target)
+			end
+ 		elseif  KoreanMechanics.Combo.IS.IMode:Value() == 1 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) and not Ready(_Q) and not Ready(_R) then
+		 	if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
+	   			Control.CastSpell(HK_SUMMONER_1, target)
+		 	end
+ 		elseif KoreanMechanics.Combo.IS.IMode:Value() == 1  and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) and not Ready(_Q) and not Ready(_R) then
+			if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
+	   		Control.CastSpell(HK_SUMMONER_2, target)
+			end
+	  	end 
+	end
 end
 
 function Brand:Harass()
-local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
+local target = GetTarget(1100)
     if target == nil then return end
-local HarassQ = KoreanMechanics.Harass.Q:Value()
-local HarassQM = KoreanMechanics.Harass.QM:Value()
-local HarassW = KoreanMechanics.Harass.W:Value()
-local HarassE = KoreanMechanics.Harass.E:Value()
-local HarassQMana = KoreanMechanics.Harass.MM.QMana:Value()
-local HarassWMana = KoreanMechanics.Harass.MM.WMana:Value()
-local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
-	if HarassQM then
-		if HarassE and Ready(_E) then
+	if KoreanMechanics.Harass.QM:Value() then
+		if KoreanMechanics.Harass.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.EMana:Value() / 100) then
 			if KoreanCanCast(_E) then
 				KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
 			end
 		end
-		if HarassQ and Ready(_Q) then
-			if KoreanCanCast(_Q) and HaveBrandBuff(target) then
+		if KoreanMechanics.Harass.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.QMana:Value() / 100) then
+			if KoreanCanCast(_Q) and Brand:HaveBrandBuff(target) then
 				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
 			end
 		end
-		if HarassW and Ready(_W) then
+		if KoreanMechanics.Harass.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.WMana:Value() / 100) then
 			if KoreanCanCast(_W) then
 				KoreanCast(HK_W, KoreanPred(target, _W), KoreanMechanics.AS.WAS:Value())
 			end
 		end
 	end
-	if not HarassQM then
-		if HarassE and Ready(_E) then
+	if not KoreanMechanics.Harass.QM:Value() then
+		if KoreanMechanics.Harass.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.EMana:Value() / 100) then
 			if KoreanCanCast(_E) then
 				KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
 			end
 		end
-		if HarassQ and Ready(_Q) then
+		if KoreanMechanics.Harass.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.QMana:Value() / 100) then
 			if KoreanCanCast(_Q) and not KoreanCanCast(_E) then
 				KoreanCast(HK_Q, KoreanPred(target, _Q), KoreanMechanics.AS.QAS:Value())
 			end
 		end
-		if HarassW and Ready(_W) then
+		if KoreanMechanics.Harass.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.WMana:Value() / 100) then
 			if KoreanCanCast(_W) then
 				KoreanCast(HK_W, KoreanPred(target, _W), KoreanMechanics.AS.WAS:Value())
 			end
@@ -1764,9 +1610,9 @@ local Minions = nil
 	if ClearW and Ready(_W) and (myHero.mana/myHero.maxMana >= ClearMana / 100) then
 		for i = 1, #GetEnemyMinions do
 		local Minions = GetEnemyMinions[i]
-		local Count = MinionsAround(Minions.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range , Minions.team)
-			if Count >= KoreanMechanics.Clear.WC:Value() and Minions.distance <= Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range then
-			local Wpos = Minions:GetPrediction(Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].speed, Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].delay)
+		local Count = MinionsAround(Minions.pos, Spells["Brand"]["BrandW"].range , Minions.team)
+			if Count >= KoreanMechanics.Clear.WC:Value() and Minions.distance <= Spells["Brand"]["BrandW"].range then
+			local Wpos = Minions:GetPrediction(Spells["Brand"]["BrandW"].speed, Spells["Brand"]["BrandW"].delay)
 				KoreanCast(HK_W, Wpos, KoreanMechanics.AS.WAS:Value())
 			end
 		end
@@ -1774,7 +1620,7 @@ local Minions = nil
 	if ClearE and Ready(_E) and (myHero.mana/myHero.maxMana >= ClearMana / 100) then
 		for i = 1, #GetEnemyMinions do
 		local Minions = GetEnemyMinions[i]
-			if Minions.distance <= Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range and HaveBrandBuff(Minions) then
+			if Minions.distance <= Spells["Brand"]["BrandE"].range and Brand:HaveBrandBuff(Minions) then
 			local pos = Minions.pos 
 				KoreanCast(HK_E, pos, KoreanMechanics.AS.EAS:Value())
 			end
@@ -1787,22 +1633,17 @@ function Brand:Draw()
     if not myHero.dead then
     	if KoreanMechanics.Draw.Enabled:Value() then
 	        if KoreanMechanics.Draw.QD.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].range, KoreanMechanics.Draw.QD.Width:Value(), KoreanMechanics.Draw.QD.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Brand"]["BrandQ"].range, KoreanMechanics.Draw.QD.Width:Value(), KoreanMechanics.Draw.QD.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.WD.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range, KoreanMechanics.Draw.WD.Width:Value(), KoreanMechanics.Draw.WD.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Brand"]["BrandW"].range, KoreanMechanics.Draw.WD.Width:Value(), KoreanMechanics.Draw.WD.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.ED.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_E).name)].range, KoreanMechanics.Draw.ED.Width:Value(), KoreanMechanics.Draw.ED.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Brand"]["BrandE"].range, KoreanMechanics.Draw.ED.Width:Value(), KoreanMechanics.Draw.ED.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.RD.Enabled:Value()  then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].range, KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Brand"]["BrandR"].range, KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
 	        end
-	        local target = GetTarget()
-	        if target == nil then return end
-	            if target then
-	            Draw.Circle(target.pos, 100, KoreanMechanics.Draw.TD.Width:Value(), KoreanMechanics.Draw.TD.Color:Value())
-	        end 
 	    end
     end
 end
@@ -1885,7 +1726,7 @@ end
 function Darius:Tick()
 	if myHero.dead then return end
     local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
-    if target and GetMode() == "Combo" then
+    if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
         self:Harass(target)
@@ -1894,148 +1735,154 @@ function Darius:Tick()
 	end
 end
 
-function Darius:Combo()
-local ComboQ = KoreanMechanics.Combo.Q:Value()
-local ComboW = KoreanMechanics.Combo.W:Value()
-local ComboE = KoreanMechanics.Combo.E:Value()
-local ComboR = KoreanMechanics.Combo.R:Value()
-local ComboI = KoreanMechanics.Combo.IS.I:Value()
-local ComboIHP = KoreanMechanics.Combo.IS.IHP:Value() 
-local ComboYG = KoreanMechanics.Combo.IT.YG:Value()
-local ComboYGR = KoreanMechanics.Combo.IT.YGR:Value()
-local ComboT = KoreanMechanics.Combo.IT.T:Value()
-local ComboTH = KoreanMechanics.Combo.IT.TH:Value()
-local ComboRH = KoreanMechanics.Combo.IT.RH:Value()
-local ComboQMana = KoreanMechanics.Combo.MM.QMana:Value()
-local ComboWMana = KoreanMechanics.Combo.MM.WMana:Value()
-local ComboEMana = KoreanMechanics.Combo.MM.EMana:Value()
-local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
-local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
+ function Darius:RStacks(unit)
+    if not unit then print("nounit") return 0 end
+    for i = 0, unit.buffCount do
+        local buff = unit:GetBuff(i)
+        local Counter = buff.count
+        if buff.name == "DariusHemo" and  buff.count > 0 then
+            return Counter
+        end
+    end
+    return 0
+end
+
+function Darius:GetDariusRdmg()
+local target = GetTarget(1000)
     if target == nil then return end
-    if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then
-    	if KoreanCanCast(_R) and target.health <= GetDariusRdmg() *0.9 and not  target.isImmortal then
+local level = GetRlvl()
+    if level == nil then return 1 
+    end
+local Stacks = (Darius:RStacks(target) + 1)
+	if Stacks >= 4 then
+	  AD = myHero.totalDamage
+	else  AD = myHero.bonusDamage
+	end
+local basedmg = (({0, 100, 200, 300})[level] + (0.75 * AD))
+local stacksdmg = (  (({0, 100, 200, 300})[level]) * ((({0, 0.2, 0.4, 0.6, 0.8, 1})[Stacks]) ) )
+local Rdmg =  ((basedmg + stacksdmg) + (60 * (({0, 0.2, 0.4, 0.6, 0.8, 1})[Stacks]))) --CalcPhysicalDamage(myHero, target, ((basedmg + stacksdmg)))
+    return Rdmg
+end
+
+function Darius:Combo()
+local target = GetTarget(800)
+    if target == nil then return end	
+    if KoreanMechanics.Combo.R:Value() and Ready(_R) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then
+    	if KoreanCanCast(_R) and target.health <= Darius:GetDariusRdmg() *0.9 and not  target.isImmortal then
     		local pos = target.pos
     		KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
     	end
     end
-    if ComboYG and GetItemSlot(myHero, 3142) >= 1 then 
-		if Ready(GetItemSlot(myHero, 3142)) and target.distance <= ComboYGR  then 
+    if KoreanMechanics.Combo.IT.YG:Value() and GetItemSlot(myHero, 3142) >= 1 then 
+		if Ready(GetItemSlot(myHero, 3142)) and target.distance <= KoreanMechanics.Combo.IT.YGR:Value()  then 
 			Control.CastSpell(ItemHotKey[GetItemSlot(myHero, 3142)], target)
 		end 
 	end
-	if ComboT and GetItemSlot(myHero, 3077) >= 1 then 
-		if Ready(GetItemSlot(myHero, 3077)) and target.distance <= 350 and target.health >= GetDariusRdmg() then 
+	if KoreanMechanics.Combo.IT.T:Value() and GetItemSlot(myHero, 3077) >= 1 then 
+		if Ready(GetItemSlot(myHero, 3077)) and target.distance <= 350 and target.health >= Darius:GetDariusRdmg() then 
 			Control.CastSpell(ItemHotKey[GetItemSlot(myHero, 3077)], target)
 		end 
 	end
-	if ComboTH and GetItemSlot(myHero, 3748) >= 1 then 
-		if Ready(GetItemSlot(myHero, 3748)) and target.distance <= 550 and target.health >= GetDariusRdmg() then 
+	if KoreanMechanics.Combo.IT.TH:Value() and GetItemSlot(myHero, 3748) >= 1 then 
+		if Ready(GetItemSlot(myHero, 3748)) and target.distance <= 550 and target.health >= Darius:GetDariusRdmg() then 
 			Control.CastSpell(ItemHotKey[GetItemSlot(myHero, 3748)], target)
 		end 
 	end
-	if ComboRH and GetItemSlot(myHero, 3074) >= 1 then 
-		if Ready(GetItemSlot(myHero, 3074)) and target.distance <= 350 and target.health >= GetDariusRdmg() then 
+	if KoreanMechanics.Combo.IT.RH:Value() and GetItemSlot(myHero, 3074) >= 1 then 
+		if Ready(GetItemSlot(myHero, 3074)) and target.distance <= 350 and target.health >= Darius:GetDariusRdmg() then 
 			Control.CastSpell(ItemHotKey[GetItemSlot(myHero, 3074)], target)
 		end 
 	end
-	if ComboE and Ready(_E) and (myHero.mana/myHero.maxMana >= ComboEMana / 100) then
+	if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
 		if KoreanCanCast(_E) then 
 			KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
 		end
-		if ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
+		if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
 			if KoreanCanCast(_W) then
 				local pos = target.pos
 				KoreanCast(HK_W, pos, KoreanMechanics.AS.WAS:Value())
 			end
 		end
-		if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-			if KoreanCanCast(_Q) and target.distance > 150 then 
-				KoreanCast(HK_Q, Game.mousePos(), KoreanMechanics.AS.QAS:Value())
-			end
-		end
-	elseif ComboW and Ready(_W) and (myHero.mana/myHero.maxMana >= ComboWMana / 100) then
-			if KoreanCanCast(_W) then
-				local pos = target.pos
-				KoreanCast(HK_W, pos, KoreanMechanics.AS.WAS:Value())
-			end
-			if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
-				if KoreanCanCast(_Q) and target.distance > 150 then 
-					KoreanCast(HK_Q, Game.mousePos(), KoreanMechanics.AS.QAS:Value())
-				end
-			end
-	else
-		if ComboQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ComboQMana / 100) then
+		if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
 			if KoreanCanCast(_Q) and target.distance > 150 then 
 				KoreanCast(HK_Q, Game.mousePos(), KoreanMechanics.AS.QAS:Value())
 			end
 		end
 	end
-	if ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) then
-	    if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= ComboIHP/100 then
-	        Control.CastSpell(HK_SUMMONER_1, target)
-	    end
-	elseif ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) then
-	    if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= ComboIHP/100 then
-	        Control.CastSpell(HK_SUMMONER_2, target)
-	       	end
-	elseif ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 1 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) and not Ready(_Q) and not Ready(_R) then
-	    if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
-	       	Control.CastSpell(HK_SUMMONER_1, target)
-	    end
-	elseif ComboI and KoreanMechanics.Combo.IS.IMode:Value() == 1  and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) and not Ready(_Q) and not Ready(_R) then
-	    if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
-	        Control.CastSpell(HK_SUMMONER_2, target)
-	    end
-	end 
-end
-
-function Darius:Harass()
-local HarassQ = KoreanMechanics.Harass.Q:Value()
-local HarassW = KoreanMechanics.Harass.W:Value()
-local HarassE = KoreanMechanics.Harass.E:Value()
-local HarassT = KoreanMechanics.Harass.IT.T:Value()
-local HarassTH = KoreanMechanics.Harass.IT.TH:Value()
-local HarassRH = KoreanMechanics.Harass.IT.RH:Value()
-local HarassQMana = KoreanMechanics.Harass.MM.QMana:Value()
-local HarassWMana = KoreanMechanics.Harass.MM.WMana:Value()
-local HarassEMana = KoreanMechanics.Harass.MM.EMana:Value()
-local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
-    if target == nil then return end
-    if HarassE and Ready(_E) and (myHero.mana/myHero.maxMana >= HarassEMana / 100) then
-    	if KoreanCanCast(_E) then
-    		KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
-    	end
-    end
-    if HarassT and GetItemSlot(myHero, 3077) >= 1 then 
-		if Ready(GetItemSlot(myHero, 3077)) and target.distance <= 350  then 
-			Control.CastSpell(ItemHotKey[GetItemSlot(myHero, 3077)], target)
-		end 
-	end
-	if HarassTH and GetItemSlot(myHero, 3748) >= 1 then 
-		if Ready(GetItemSlot(myHero, 3748)) and target.distance <= 550  then 
-			Control.CastSpell(ItemHotKey[GetItemSlot(myHero, 3748)], target)
-		end 
-	end
-	if HarassRH and GetItemSlot(myHero, 3074) >= 1 then 
-		if Ready(GetItemSlot(myHero, 3074)) and target.distance <= 350  then 
-			Control.CastSpell(ItemHotKey[GetItemSlot(myHero, 3074)], target)
-		end 
-	end
-	if HarassW and Ready(_W) and (myHero.mana/myHero.maxMana >= HarassWMana / 100) then
+	if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
 		if KoreanCanCast(_W) then
 			local pos = target.pos
 			KoreanCast(HK_W, pos, KoreanMechanics.AS.WAS:Value())
 		end
-		if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
+		if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
+			if KoreanCanCast(_Q) and target.distance > 150 then 
+				KoreanCast(HK_Q, Game.mousePos(), KoreanMechanics.AS.QAS:Value())
+			end
+		end
+	end
+	if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
+		if KoreanCanCast(_Q) and target.distance > 150 then 
+			KoreanCast(HK_Q, Game.mousePos(), KoreanMechanics.AS.QAS:Value())
+		end
+	end
+   	if KoreanMechanics.Combo.IS.I:Value() then 
+   		if KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) then
+       		if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= KoreanMechanics.Combo.IS.IHP:Value() /100 then
+            	Control.CastSpell(HK_SUMMONER_1, target)
+       		end
+		elseif  KoreanMechanics.Combo.IS.IMode:Value() == 2 and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) then
+        	if IsValidTarget(target, 600, true, myHero) and target.health/target.maxHealth <= KoreanMechanics.Combo.IS.IHP:Value() /100 then
+           		 Control.CastSpell(HK_SUMMONER_2, target)
+       		end
+		elseif  KoreanMechanics.Combo.IS.IMode:Value() == 1 and myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) and not Ready(_Q) and not Ready(_R) then
+       	 	if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
+           		Control.CastSpell(HK_SUMMONER_1, target)
+       	 	end
+		elseif KoreanMechanics.Combo.IS.IMode:Value() == 1  and myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) and not Ready(_Q) and not Ready(_R) then
+       		 if IsValidTarget(target, 600, true, myHero) and 50+20*myHero.levelData.lvl > target.health*1.1 then
+           		Control.CastSpell(HK_SUMMONER_2, target)
+        	end
+    	end 
+    end
+end
+
+function Darius:Harass()
+local target = GetTarget(800)
+    if target == nil then return end		
+    if KoreanMechanics.Harass.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.EMana:Value() / 100) then
+    	if KoreanCanCast(_E) then
+    		KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
+    	end
+    end
+    if KoreanMechanics.Harass.IT.T:Value() and GetItemSlot(myHero, 3077) >= 1 then 
+		if Ready(GetItemSlot(myHero, 3077)) and target.distance <= 350  then 
+			Control.CastSpell(ItemHotKey[GetItemSlot(myHero, 3077)], target)
+		end 
+	end
+	if KoreanMechanics.Harass.IT.TH:Value() and GetItemSlot(myHero, 3748) >= 1 then 
+		if Ready(GetItemSlot(myHero, 3748)) and target.distance <= 550  then 
+			Control.CastSpell(ItemHotKey[GetItemSlot(myHero, 3748)], target)
+		end 
+	end
+	if KoreanMechanics.Harass.IT.RH:Value() and GetItemSlot(myHero, 3074) >= 1 then 
+		if Ready(GetItemSlot(myHero, 3074)) and target.distance <= 350  then 
+			Control.CastSpell(ItemHotKey[GetItemSlot(myHero, 3074)], target)
+		end 
+	end
+	if KoreanMechanics.Harass.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.WMana:Value() / 100) then
+		if KoreanCanCast(_W) then
+			local pos = target.pos
+			KoreanCast(HK_W, pos, KoreanMechanics.AS.WAS:Value())
+		end
+		if KoreanMechanics.Harass.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.QMana:Value() / 100) then
 			if KoreanCanCast(_Q) then
 				KoreanCast(HK_Q, Game.mousePos(), KoreanMechanics.AS.QAS:Value())
 			end
 		end
-	else
-		if HarassQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= HarassQMana / 100) then
-			if KoreanCanCast(_Q) then
-				KoreanCast(HK_Q, Game.mousePos(), KoreanMechanics.AS.QAS:Value())
-			end
+	end
+	if KoreanMechanics.Harass.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.QMana:Value() / 100) then
+		if KoreanCanCast(_Q) then
+			KoreanCast(HK_Q, Game.mousePos(), KoreanMechanics.AS.QAS:Value())
 		end
 	end
 end 
@@ -2048,8 +1895,8 @@ local Minions = nil
 	if ClearQ and Ready(_Q) and (myHero.mana/myHero.maxMana >= ClearMana / 100) then
 		for i = 1, #GetEnemyMinions do
 		local Minions = GetEnemyMinions[i]
-		local Count = MinionsAround(Minions.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].range , Minions.team)
-			if Count >=	KoreanMechanics.Clear.QC:Value() and Minions.distance <= Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].range then
+		local Count = MinionsAround(Minions.pos, Spells["Darius"]["DariusCleave"].range , Minions.team)
+			if Count >=	KoreanMechanics.Clear.QC:Value() and Minions.distance <= Spells["Darius"]["DariusCleave"].range then
 				KoreanCast(HK_Q, Game.mousePos(), KoreanMechanics.AS.QAS:Value())
 			end
 		end
@@ -2060,26 +1907,23 @@ function Darius:Draw()
     if not myHero.dead then
     	if KoreanMechanics.Draw.Enabled:Value() then
 	        if KoreanMechanics.Draw.QD.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_Q).name)].range, KoreanMechanics.Draw.QD.Width:Value(), KoreanMechanics.Draw.QD.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Darius"]["DariusCleave"].range, KoreanMechanics.Draw.QD.Width:Value(), KoreanMechanics.Draw.QD.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.WD.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_W).name)].range, KoreanMechanics.Draw.WD.Width:Value(), KoreanMechanics.Draw.WD.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Darius"]["DariusNoxianTacticsONH"].range, KoreanMechanics.Draw.WD.Width:Value(), KoreanMechanics.Draw.WD.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.ED.Enabled:Value() then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_E).name)].range, KoreanMechanics.Draw.ED.Width:Value(), KoreanMechanics.Draw.ED.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Darius"]["DariusAxeGrabCone"].range, KoreanMechanics.Draw.ED.Width:Value(), KoreanMechanics.Draw.ED.Color:Value())
 	        end
 	        if KoreanMechanics.Draw.RD.Enabled:Value()  then
-	            Draw.Circle(myHero.pos, Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].range, KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
+	            Draw.Circle(myHero.pos, Spells["Darius"]["DariusExecute"].range, KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
 	        end
 	        local target = GetTarget()
 	        if target == nil then return end
-	            if target then
-	            Draw.Circle(target.pos, 100, KoreanMechanics.Draw.TD.Width:Value(), KoreanMechanics.Draw.TD.Color:Value())
-	        end 
-	        if KoreanMechanics.Draw.DMG:Value() then
-	        	if  GetDariusRdmg(target) ~= nil and Ready(_R) then 
+	       	if KoreanMechanics.Draw.DMG:Value() then
+	        	if  Darius:GetDariusRdmg(target) ~= nil and Ready(_R) then 
 	        		local textPos = myHero.pos:To2D()
-					Draw.Text("R DMG " .. tostring(math.floor(GetDariusRdmg(target))), 20, textPos.x - 80, textPos.y + 40, Draw.Color(255, 255, 0, 0)) 
+					Draw.Text("R DMG " .. tostring(math.floor(Darius:GetDariusRdmg(target))), 20, textPos.x - 80, textPos.y + 40, Draw.Color(255, 255, 0, 0)) 
 				end
 			end
 	    end
