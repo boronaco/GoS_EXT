@@ -1053,10 +1053,6 @@ function Diana:Menu()
 	KoreanMechanics.Combo:MenuElement({type = MENU, id = "RS", name = "R Settings"})
 	KoreanMechanics.Combo.RS:MenuElement({id = "R", name = "Use R", value = true})
 	KoreanMechanics.Combo.RS:MenuElement({id = "RHP", name = "Use R when target HP%", value = 70, min = 0, max = 100, step = 1})
-	KoreanMechanics.Combo.RS:MenuElement({type = MENU, id = "RWL", name = "R Whitelist"})
-	for K, Enemy in pairs(GetEnemyHeroes()) do
-	KoreanMechanics.Combo.RS.RWL:MenuElement({id = Enemy.charName, name = Enemy.charName, value = true})
-	end
 	KoreanMechanics.Combo:MenuElement({id = "Mode", name = "ComboMode [?]", drop = {"Normal", "Korean", "Misaya [Coming Soon]"}, tooltip = "Korean Combo Uses fast R"})
 	KoreanMechanics.Combo:MenuElement({type = MENU, id = "IS", name = "Ignite Settings"})
 	KoreanMechanics.Combo.IS:MenuElement({id = "I", name = "Use Ignite", value = true})		
@@ -1171,20 +1167,20 @@ local ComboRMana = KoreanMechanics.Combo.MM.RMana:Value()
     	end
     end
     if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then 
-    	if KoreanMechanics.Combo.RS.RWL[target.charName]:Value() and (target.health/target.maxHealth) <= (ComboRHP/100) and HaveDianaBuff(target) and KoreanCanCast(_R) then
+    	if (target.health/target.maxHealth) <= (ComboRHP/100) and HaveDianaBuff(target) and KoreanCanCast(_R) then
     	local pos = target.pos
     		KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
     	end
     end
     if ComboMode == 2 then
     	if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then 
-    		if KoreanMechanics.Combo.RS.RWL[target.charName]:Value() and (target.health/target.maxHealth) <= (ComboRHP/100) and HaveDianaBuff(target) and KoreanCanCast(_R) then
+    		if (target.health/target.maxHealth) <= (ComboRHP/100) and HaveDianaBuff(target) and KoreanCanCast(_R) then
     		local pos = target.pos
     			KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
     		end
    		end
    		if ComboR and Ready(_R) and (myHero.mana/myHero.maxMana >= ComboRMana / 100) then
-   			if not Ready(_Q) and KoreanMechanics.Combo.RS.RWL[target.charName]:Value() and (target.health/target.maxHealth) <= (ComboRHP/100) and KoreanCanCast(_R) then
+   			if not Ready(_Q) and (target.health/target.maxHealth) <= (ComboRHP/100) and KoreanCanCast(_R) then
    				local pos = target.pos
    				KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
    			end
