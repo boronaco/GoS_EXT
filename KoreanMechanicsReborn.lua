@@ -337,7 +337,7 @@ _G.Spells = {
 }
 --KoreanCast
 function KoreanCanCast(spell)
-local target = GetTarget(Spells[myHero.charName][targetvalue])
+local target = GOS:GetTarget(Spells[myHero.charName][targetvalue])
 local spellname = Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)]
     if target == nil then return end
     local Range = spellname.range * 0.95 or math.huge
@@ -450,7 +450,7 @@ end
 
 function Ahri:Tick()
     if myHero.dead then return end
-    local target = GetTarget(1500)
+    target = GOS:GetTarget(1500)
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
@@ -461,7 +461,6 @@ function Ahri:Tick()
 end
 
 function Ahri:Combo()
-local target = GetTarget(1500)
     if target == nil then return end	
     if KoreanMechanics.Combo.RS.R:Value() and Ready(_R) and target.distance < KoreanMechanics.Combo.RS.RD:Value() and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then
         if target.valid and not target.Dead and target.health/target.maxHealth <= KoreanMechanics.Combo.RS.RHP:Value()/100 then
@@ -520,7 +519,6 @@ local target = GetTarget(1500)
 end
 
 function Ahri:Harass()
-local target = GetTarget(1500)
     if target == nil then return end	
 local HarassQ = KoreanMechanics.Harass.Q:Value()
 local HarassW = KoreanMechanics.Harass.W:Value() 
@@ -592,7 +590,7 @@ function Ahri:Draw()
 	        if KoreanMechanics.Draw.RD.Enabled:Value() then
 	            Draw.Circle(myHero.pos, KoreanMechanics.Combo.RS.RD:Value(), KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
 	        end 
-	        local target = GetTarget()
+	        local target = GOS:GetTarget()
 	        if target == nil then return end
 	            if target then
 	            Draw.Circle(target.pos, 100, KoreanMechanics.Draw.TD.Width:Value(), KoreanMechanics.Draw.TD.Color:Value())
@@ -683,7 +681,7 @@ end
 
 function KogMaw:Tick()
 	if myHero.dead then return end
-    local target = GetTarget(KogMaw:GetKogRange())
+	target = GOS:GetTarget(KogMaw:GetKogRange())
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
@@ -711,7 +709,6 @@ end
 end
 
 function KogMaw:Combo()
-local target = GetTarget(KogMaw:GetKogRange())
     if target == nil then return end	
 	if KoreanMechanics.Combo.IT.YG:Value() and GetItemSlot(myHero, 3142) >= 1 then 
 		if Ready(GetItemSlot(myHero, 3142)) and target.distance <= KoreanMechanics.Combo.IT.YGR:Value()  then 
@@ -826,7 +823,6 @@ local target = GetTarget(KogMaw:GetKogRange())
 end
 
 function KogMaw:Harass()
-local target = GetTarget(KogMaw:GetKogRange())
     if target == nil then return end	
 	if KoreanMechanics.Harass.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.EMana:Value() / 100) then
 		if KoreanCanCast(_E) then
@@ -989,7 +985,7 @@ end
 
 function Diana:Tick()
 	if myHero.dead then return end
-    local target = GetTarget(1000)
+    target = GOS:GetTarget(1000)
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
@@ -1010,7 +1006,6 @@ function Diana:HaveDianaBuff(unit)
 end
 
 function Diana:Combo()
-local target = GetTarget(1000)
     if target == nil then return end	
     if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
     	if KoreanCanCast(_W) then
@@ -1084,7 +1079,6 @@ local target = GetTarget(1000)
 end
 
 function Diana:Harass()
-local target = GetTarget(1000)
     if target == nil then return end	
 	if KoreanMechanics.Harass.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.WMana:Value() / 100) then
 		if KoreanCanCast(_W) then
@@ -1243,7 +1237,7 @@ end
 
 function Blitzcrank:Tick()
 	if myHero.dead then return end
-    local target = GetTarget(1000)
+    target = GOS:GetTarget(1000)
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif GetMode() == "Harass" then
@@ -1254,7 +1248,6 @@ function Blitzcrank:Tick()
 end
 
 function Blitzcrank:Combo()
-local target = GetTarget(1000)
     if target == nil then return end	
 	if KoreanMechanics.Combo.QS.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then
 		if target.distance <= KoreanMechanics.Combo.QS.QR:Value() and KoreanCanCast(_Q) then
@@ -1302,7 +1295,6 @@ local target = GetTarget(1000)
 end
 
 function Blitzcrank:Harass()
-local target = GetTarget(1000)
     if target == nil then return end	
     if KoreanMechanics.Harass.Q:Value()and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.QMana:Value() / 100) then 
     	if target.distance <= KoreanMechanics.Combo.QS.QR:Value() and KoreanCanCast(_Q) then
@@ -1433,7 +1425,7 @@ end
 
 function Brand:Tick()
 	if myHero.dead then return end
-    local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
+    target = GOS:GetTarget(1100)
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
@@ -1455,7 +1447,6 @@ end
 
 
 function Brand:GetBrandRdmg()
-local target = GetTarget(1100)
     if target == nil then return end
 local lvl = GetRlvl()
     if level == nil then return 1 
@@ -1466,7 +1457,6 @@ local Rdmg = CalcMagicalDamage(myHero.target, ((0.25 * AP) + (({0, 100, 200, 300
 end 
 
 function Brand:Combo()
-local target = GetTarget(1100)
     if target == nil then return end	
     if KoreanMechanics.Combo.QM:Value() then
     	if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
@@ -1563,7 +1553,6 @@ local target = GetTarget(1100)
 end
 
 function Brand:Harass()
-local target = GetTarget(1100)
     if target == nil then return end
 	if KoreanMechanics.Harass.QM:Value() then
 		if KoreanMechanics.Harass.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.EMana:Value() / 100) then
@@ -1725,7 +1714,7 @@ end
 
 function Darius:Tick()
 	if myHero.dead then return end
-    local target = GetTarget(Spells[myHero.charName][tostring(targetvalue)])
+    target = GOS:GetTarget(800)
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
@@ -1748,7 +1737,6 @@ end
 end
 
 function Darius:GetDariusRdmg()
-local target = GetTarget(1000)
     if target == nil then return end
 local level = GetRlvl()
     if level == nil then return 1 
@@ -1765,7 +1753,6 @@ local Rdmg =  ((basedmg + stacksdmg) + (60 * (({0, 0.2, 0.4, 0.6, 0.8, 1})[Stack
 end
 
 function Darius:Combo()
-local target = GetTarget(800)
     if target == nil then return end	
     if KoreanMechanics.Combo.R:Value() and Ready(_R) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then
     	if KoreanCanCast(_R) and target.health <= Darius:GetDariusRdmg() *0.9 and not  target.isImmortal then
@@ -1847,7 +1834,6 @@ local target = GetTarget(800)
 end
 
 function Darius:Harass()
-local target = GetTarget(800)
     if target == nil then return end		
     if KoreanMechanics.Harass.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Harass.MM.EMana:Value() / 100) then
     	if KoreanCanCast(_E) then
@@ -1918,7 +1904,7 @@ function Darius:Draw()
 	        if KoreanMechanics.Draw.RD.Enabled:Value()  then
 	            Draw.Circle(myHero.pos, Spells["Darius"]["DariusExecute"].range, KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
 	        end
-	        local target = GetTarget()
+	        local target = GOS:GetTarget()
 	        if target == nil then return end
 	       	if KoreanMechanics.Draw.DMG:Value() then
 	        	if  Darius:GetDariusRdmg(target) ~= nil and Ready(_R) then 
