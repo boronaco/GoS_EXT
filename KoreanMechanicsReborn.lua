@@ -264,7 +264,7 @@ local function GetEnemyHeroes()
     return _EnemyHeroes
 end
 
-local function GetEnemesInRange(range, unit)
+ function GetEnemiesInRange(range, unit)
     local unit = unit or myHero
     local Enemies = GetEnemyHeroes()
     local inRange = {}
@@ -272,7 +272,7 @@ local function GetEnemesInRange(range, unit)
     for i = 1, #Enemies do
         local Enemy = Enemies[i]
 
-        if GetDistance(unit, Enemy) <= range then
+        if Enemy.distance <= range then
             inRange[#inRange + 1] = Enemy
         end
     end
