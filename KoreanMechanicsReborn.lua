@@ -361,19 +361,39 @@ local pos = GetPred(target, spellname.speed, spellname.delay + Game.Latency()/10
     end
 end     
 
-function KoreanCast(spell, pos, delay)
-    local Cursor = Game.mousePos()
-    if pos == nil then return end
-        GOS.BlockMovement = true
-        Control.SetCursorPos(pos)
-        DelayAction(function() Control.KeyDown(spell) end,0.01) 
-        DelayAction(function() 
-         Control.KeyUp(spell)
-         GOS.BlockMovement = false
-        end, (delay + Game.Latency()) / 1000)      
+local function BlockMovement()
+	if _G.GOS then 
+		GOS.BlockMovement = true
+	elseif _G.SDK and _G.SDK.Orbwalker then
+		myHero:SetMovement(false)
+	end
 end 
 
+local function UnblockMovement()
+	if _G.GOS then
+		GOS.BlockMovement = false 
+	elseif _G.SDK and _G.SDK.Orbwalker then
+		myHero:SetMovement(true)
+	end
+end
 
+local isKCasting = false
+function KoreanCast(spell, pos, delay)
+    if pos == nil or isKCasting == true then return end
+    isKCasting = true
+    local cursorReset = mousePos
+    BlockMovement()
+    DelayAction(function()
+        Control.SetCursorPos(pos)
+        Control.KeyDown(spell) 
+        end,0.01) 
+    DelayAction(function() 
+        Control.KeyUp(spell)
+        Control.SetCursorPos(cursorReset)
+        UnblockMovement()
+        isKCasting = false
+        end, (delay + Game.Latency()) / 1000)
+end
 class "Ahri"
 
 function Ahri:__init()
@@ -676,7 +696,7 @@ end
 
 function KogMaw:Tick()
 	if myHero.dead then return end
-	target = GOS:GetTarget(2000)
+	target = GOS:GetTarget(KogMaw:GetKogRange())
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
