@@ -696,7 +696,7 @@ end
 
 function KogMaw:Tick()
 	if myHero.dead then return end
-	target = GOS:GetTarget(KogMaw:GetKogRange())
+	target = GOS:GetTarget(2000)
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
@@ -725,6 +725,16 @@ end
 
 function KogMaw:Combo()
     if target == nil then return end	
+    if KoreanMechanics.Combo.RS.R:Value() and Ready(_R) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then
+		if IsValidTarget(target, 1800, true, myHero) and (target.health/target.maxHealth) <= (KoreanMechanics.Combo.RS.RHP:Value()/100) and (KogMaw:KogMawRStacks() + 1) <= KoreanMechanics.Combo.RS.RST:Value() then
+			if target.distance >= KoreanMechanics.Combo.RS.RR:Value() and target.distance < 1200 then
+				local Rpos = GetPred(target, Spells["KogMaw"]["KogMawLivingArtillery"].speed, Spells["KogMaw"]["KogMawLivingArtillery"].delay + Game.Latency()/1000)	
+				if Rpos then 		
+					KoreanCast(HK_R, Rpos, KoreanMechanics.AS.RAS:Value())
+				end
+			end
+		end
+	end
 	if KoreanMechanics.Combo.IT.YG:Value() and GetItemSlot(myHero, 3142) >= 1 then 
 		if Ready(GetItemSlot(myHero, 3142)) and target.distance <= KoreanMechanics.Combo.IT.YGR:Value()  then 
 			Control.CastSpell(ItemHotKey[GetItemSlot(myHero, 3142)], target)
@@ -818,23 +828,7 @@ function KogMaw:Combo()
 				KoreanCast(HK_E, KoreanPred(target, _E), KoreanMechanics.AS.EAS:Value())
 			end
 		end
-	end
-	if KoreanMechanics.Combo.RS.R:Value() and Ready(_R) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then
-		if IsValidTarget(target, KogMaw:GetKogRange(), true, myHero) and (target.health/target.maxHealth) <= (KoreanMechanics.Combo.RS.RHP:Value()/100) and (KogMaw:KogMawRStacks() + 1) <= KoreanMechanics.Combo.RS.RST:Value() then
-			if target.distance >= KoreanMechanics.Combo.RS.RR:Value() and target.distance < 1200 then
-				local Rpos = GetPred(target, Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].speed, Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].delay + Game.Latency()/1000)	
-					if Rpos then 		
-						KoreanCast(HK_R, Rpos, KoreanMechanics.AS.RAS:Value())
-					end
-			end
-			if target.distance >= KoreanMechanics.Combo.RS.RR:Value() and target.distance > 1200 then
-			local Rpos = GetPred(target, Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].speed, Spells[myHero.charName][tostring(myHero:GetSpellData(_R).name)].delay + Game.Latency()/1000)	
-				if Rpos and Rpos.onScreen then 		
-					KoreanCast(HK_R, Rpos, KoreanMechanics.AS.RAS:Value())
-				end
-			end
-		end
-	end
+	end 
 end
 
 function KogMaw:Harass()
