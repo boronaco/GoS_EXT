@@ -676,7 +676,7 @@ end
 
 function KogMaw:Tick()
 	if myHero.dead then return end
-	target = GOS:GetTarget(KogMaw:GetKogRange())
+	target = GOS:GetTarget(2000)
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
