@@ -1,7 +1,6 @@
 local KoreanChamps = {"Ahri", "Brand", "Blitzcrank", "Darius", "Diana", "KogMaw"}
 if not table.contains(KoreanChamps, myHero.charName)  then print("" ..myHero.charName.. " Is Not (Yet) Supported") return end
 
-
 local KoreanMechanics = MenuElement({type = MENU, id = "KoreanMechanics", name = "Korean Mechanics Reborn | " ..myHero.charName, leftIcon = "http://4.1m.yt/d5VbDBm.png"})
 KoreanMechanics:MenuElement({type = MENU, id = "Combo", name = "Korean Combo Settings"})
 KoreanMechanics:MenuElement({type = MENU, id = "Harass", name = "Korean Harass Settings"})
@@ -357,7 +356,7 @@ local function BlockMovement()
 	if _G.GOS then 
 		GOS.BlockMovement = true
 	elseif _G.SDK and _G.SDK.Orbwalker then
-		myHero:SetMovement(false)
+		_G.SDK.Orbwalker:SetMovement(false)
 	end
 end 
 
@@ -365,7 +364,7 @@ local function UnblockMovement()
 	if _G.GOS then
 		GOS.BlockMovement = false 
 	elseif _G.SDK and _G.SDK.Orbwalker then
-		myHero:SetMovement(true)
+		_G.SDK.Orbwalker:SetMovement(true)
 	end
 end
 
