@@ -357,6 +357,8 @@ local function BlockMovement()
 		GOS.BlockMovement = true
 	elseif _G.SDK and _G.SDK.Orbwalker then
 		_G.SDK.Orbwalker:SetMovement(false)
+	elseif _G.EOWLoaded then
+		EOW:MovementsEnabled(false)
 	end
 end 
 
@@ -365,6 +367,8 @@ local function UnblockMovement()
 		GOS.BlockMovement = false 
 	elseif _G.SDK and _G.SDK.Orbwalker then
 		_G.SDK.Orbwalker:SetMovement(true)
+	elseif _G.EOWLoaded then
+		EOW:MovementsEnabled(true)
 	end
 end
 
