@@ -337,7 +337,7 @@ _G.Spells = {
 }
 --KoreanCast
 function KoreanCanCast(spell)
-local target = GOS:GetTarget(Spells[myHero.charName][targetvalue])
+local target = GOS:GetTarget(Spells[myHero.charName]["targetvalue"])
 local spellname = Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)]
     if target == nil then return end
     local Range = spellname.range * 0.95 or math.huge
@@ -361,23 +361,18 @@ local pos = GetPred(target, spellname.speed, spellname.delay + Game.Latency()/10
     end
 end     
 
-local isKCasting = false
 function KoreanCast(spell, pos, delay)
-    if pos == nil or isKCasting == true then return end
-    isKCasting = true
-    local cursorReset = mousePos
-    GOS.BlockMovement = true
-    DelayAction(function()
+    local Cursor = Game.mousePos()
+    if pos == nil then return end
+        GOS.BlockMovement = true
         Control.SetCursorPos(pos)
-        Control.KeyDown(spell) 
-        end,0.01) 
-    DelayAction(function() 
-        Control.KeyUp(spell)
-        Control.SetCursorPos(cursorReset)
-        GOS.BlockMovement = false
-        isKCasting = false
-        end, (delay + Game.Latency()) / 1000)
-end
+        DelayAction(function() Control.KeyDown(spell) end,0.01) 
+        DelayAction(function() 
+         Control.KeyUp(spell)
+         GOS.BlockMovement = false
+        end, (delay + Game.Latency()) / 1000)      
+end 
+
 
 class "Ahri"
 
