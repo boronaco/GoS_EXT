@@ -16,7 +16,7 @@ function KoreanTarget(range)
 	if _G.GOS then
 		return GOS:GetTarget(range)
 	elseif _G.SDK and _G.SDK.Orbwalker then
-		return _G.SDK.Orbwalker:GetTarget(range)
+		return _G.SDK.TargetSelector:GetTarget(range)
 	end
 end
 
