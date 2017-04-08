@@ -13,20 +13,12 @@ local function Ready(spell)
 	return myHero:GetSpellData(spell).currentCd == 0 and myHero:GetSpellData(spell).level > 0 and myHero:GetSpellData(spell).mana <= myHero.mana
 end
 
-local function GetTarget(range)
-	local tts = nil
-	local G = 0
-	for i = 1,Game.HeroCount()  do
-		local hero = Game.Hero(i)	
-		if IsValidTarget(hero,range,true,hero) and hero.team ~= myHero.team then
-			local dmgtohero = getdmg("AA",hero,myHero)
-			local qqk = hero.health/dmgtohero
-			if qqk > G or tts == nil then
-				tts = hero
-			end
-		end
+function KoreanTarget(range)
+	if _G.GOS then
+		return GOS:GetTarget(range)
+	elseif _G.SDK and _G.SDK.Orbwalker then
+		return _G.SDK.Orbwalker:GetTarget(range)
 	end
-	return tts
 end
 
 local _AllyHeroes
@@ -337,7 +329,7 @@ _G.Spells = {
 }
 --KoreanCast
 function KoreanCanCast(spell)
-local target = GOS:GetTarget(Spells[myHero.charName]["targetvalue"])
+local target = KoreanTarget(Spells[myHero.charName]["targetvalue"])
 local spellname = Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)]
     if target == nil then return end
     local Range = spellname.range * 0.95 or math.huge
@@ -465,7 +457,7 @@ end
 
 function Ahri:Tick()
     if myHero.dead then return end
-    target = GOS:GetTarget(1500)
+    target = KoreanTarget(1500)
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
@@ -605,7 +597,7 @@ function Ahri:Draw()
 	        if KoreanMechanics.Draw.RD.Enabled:Value() then
 	            Draw.Circle(myHero.pos, KoreanMechanics.Combo.RS.RD:Value(), KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
 	        end 
-	        local target = GOS:GetTarget()
+	        local target = KoreanTarget()
 	        if target == nil then return end
 	            if target then
 	            Draw.Circle(target.pos, 100, KoreanMechanics.Draw.TD.Width:Value(), KoreanMechanics.Draw.TD.Color:Value())
@@ -696,7 +688,7 @@ end
 
 function KogMaw:Tick()
 	if myHero.dead then return end
-	target = GOS:GetTarget(2000)
+	target = KoreanTarget(2000)
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
@@ -994,7 +986,7 @@ end
 
 function Diana:Tick()
 	if myHero.dead then return end
-    target = GOS:GetTarget(1000)
+    target = KoreanTarget(1000)
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
@@ -1246,7 +1238,7 @@ end
 
 function Blitzcrank:Tick()
 	if myHero.dead then return end
-    target = GOS:GetTarget(1000)
+    target = KoreanTarget(1000)
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif GetMode() == "Harass" then
@@ -1434,7 +1426,7 @@ end
 
 function Brand:Tick()
 	if myHero.dead then return end
-    target = GOS:GetTarget(1100)
+    target = KoreanTarget(1100)
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
@@ -1723,7 +1715,7 @@ end
 
 function Darius:Tick()
 	if myHero.dead then return end
-    target = GOS:GetTarget(800)
+    target = KoreanTarget(800)
     if GetMode() == "Combo" then
         self:Combo(target)
     elseif target and GetMode() == "Harass" then
@@ -1913,7 +1905,7 @@ function Darius:Draw()
 	        if KoreanMechanics.Draw.RD.Enabled:Value()  then
 	            Draw.Circle(myHero.pos, Spells["Darius"]["DariusExecute"].range, KoreanMechanics.Draw.RD.Width:Value(), KoreanMechanics.Draw.RD.Color:Value())
 	        end
-	        local target = GOS:GetTarget()
+	        local target = KoreanTarget()
 	        if target == nil then return end
 	       	if KoreanMechanics.Draw.DMG:Value() then
 	        	if  Darius:GetDariusRdmg(target) ~= nil and Ready(_R) then 
