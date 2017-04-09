@@ -352,43 +352,34 @@ local pos = GetPred(target, spellname.speed, spellname.delay + Game.Latency()/10
     end
 end     
 
-local function BlockMovement()
-	if _G.GOS then 
-		GOS.BlockMovement = true
-	elseif _G.SDK and _G.SDK.Orbwalker then
-		_G.SDK.Orbwalker:SetMovement(false)
-	elseif _G.EOWLoaded then
-		EOW:MovementsEnabled(false)
-	end
-end 
+--local function BlockMovement()
+--	if _G.GOS then 
+--		GOS.BlockMovement = true
+--	elseif _G.SDK and _G.SDK.Orbwalker then
+--		_G.SDK.Orbwalker:SetMovement(false)
+--	elseif _G.EOWLoaded then
+--		EOW:MovementsEnabled(false)
+--	end
+--end 
 
-local function UnblockMovement()
-	if _G.GOS then
-		GOS.BlockMovement = false 
-	elseif _G.SDK and _G.SDK.Orbwalker then
-		_G.SDK.Orbwalker:SetMovement(true)
-	elseif _G.EOWLoaded then
-		EOW:MovementsEnabled(true)
-	end
-end
+-- local function UnblockMovement()
+--	if _G.GOS then
+--		GOS.BlockMovement = false 
+--	elseif _G.SDK and _G.SDK.Orbwalker then
+--		_G.SDK.Orbwalker:SetMovement(true)
+--	elseif _G.EOWLoaded then
+--		EOW:MovementsEnabled(true)
+--	end
+-- end
 
-local isKCasting = false
-function KoreanCast(spell, pos, delay)
-    if pos == nil or isKCasting == true then return end
-    isKCasting = true
-    local cursorReset = mousePos
-    BlockMovement()
-    DelayAction(function()
+local function KoreanCast(spell, pos, delay)
+    local Cursor = Game.mousePos()
+    if pos == nil then return end
         Control.SetCursorPos(pos)
-        Control.KeyDown(spell) 
-        end,0.01) 
-    DelayAction(function() 
-        Control.KeyUp(spell)
-        Control.SetCursorPos(cursorReset)
-        UnblockMovement()
-        isKCasting = false
-        end, (delay + Game.Latency()) / 1000)
-end
+        DelayAction(function() Control.KeyDown(spell) end,0.01) 
+        DelayAction(function() Control.KeyUp(spell) end, (delay + Game.Latency()) / 1000)
+end  
+
 class "Ahri"
 
 function Ahri:__init()
