@@ -1521,7 +1521,7 @@ function Brand:Combo()
     end
     if KoreanMechanics.Combo.RS.RMode:Value() == 1 then
     	if KoreanMechanics.Combo.RS.R:Value() and Ready(_R) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value()	 / 100) and #GetEnemiesInRange(1000) >= KoreanMechanics.Combo.RS.RC:Value() then
-    		if KoreanCanCast(_R) and GetBrandRdmg() * 1.1 >= target.health and Brand:HaveBrandBuff(target) then
+    		if KoreanCanCast(_R) and Brand:GetBrandRdmg() * 1.1 >= target.health and Brand:HaveBrandBuff(target) then
     			local pos = target.pos
     			KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
     		end
