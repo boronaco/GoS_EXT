@@ -402,6 +402,14 @@ local Attacktick = ticker
    	end	
 end
 
+local function KoreanCast2(spell, pos, delay)
+    local Cursor = Game.mousePos()
+    if pos == nil then return end
+        Control.SetCursorPos(pos)
+        DelayAction(function() Control.KeyDown(spell) end,0.01) 
+        DelayAction(function() Control.KeyUp(spell) end, (delay + Game.Latency()) / 1000) -- ˇ ˆ
+end 
+
 class "Ahri"
 
 function Ahri:__init()
@@ -1026,11 +1034,11 @@ function Diana:Combo()
     if target == nil then return end	
     if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
     	if KoreanCanCast(_W) then
-    		KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
+    		KoreanCast2(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
     	end
     	if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
     		if KoreanCanCast(_E) then
-    			KoreanCast(HK_E, Game.mousePos(), KoreanMechanics.AS.EAS:Value())
+    			KoreanCast2(HK_E, Game.mousePos(), KoreanMechanics.AS.EAS:Value())
     		end
     	end
     	if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then 
@@ -1041,7 +1049,7 @@ function Diana:Combo()
     end
     if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
     	if KoreanCanCast(_E) then
-    		KoreanCast(HK_E, Game.mousePos(), KoreanMechanics.AS.EAS:Value())
+    		KoreanCast2(HK_E, Game.mousePos(), KoreanMechanics.AS.EAS:Value())
     	end
     	if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then 
     		if KoreanCanCast(_Q) then
@@ -1064,13 +1072,13 @@ function Diana:Combo()
     	if KoreanMechanics.Combo.RS.R:Value()  and Ready(_R) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then 
     		if (target.health/target.maxHealth) <= (KoreanMechanics.Combo.RS.RHP:Value()/100) and Diana:HaveDianaBuff(target) and KoreanCanCast(_R) then
     		local pos = target.pos
-    			KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
+    			KoreanCast2(HK_R, pos, KoreanMechanics.AS.RAS:Value())
     		end
    		end
    		if KoreanMechanics.Combo.RS.R:Value()  and Ready(_R) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then
    			if not Ready(_Q) and (target.health/target.maxHealth) <= (KoreanMechanics.Combo.RS.RHP:Value()/100) and KoreanCanCast(_R) then
    				local pos = target.pos
-   				KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
+   				KoreanCast2(HK_R, pos, KoreanMechanics.AS.RAS:Value())
    			end
    		end
    	end
