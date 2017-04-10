@@ -224,7 +224,7 @@ local function GetEnemyMinions(range)
     EnemyMinions = {}
     for i = 1, Game.MinionCount() do
         local Minion = Game.Minion(i)
-        if Minion.isEnemy and IsValidTarget(Minion, range, false, myHero) and not Minion.Dead then
+        if Minion.isEnemy and IsValidTarget(Minion, range, false, myHero) and not Minion.dead then
             table.insert(EnemyMinions, Minion)
         end
     end
@@ -374,17 +374,14 @@ end
 
 local isKCasting = 0
 function KoreanCast(spell, pos, delay)
-local ticker = GetTickCount()
     if pos == nil or isKCasting == 1 then return end
     isKCasting = 1
-local Attacktick = ticker
-	lastAttack = GetTickCount()
     local cursorReset = mousePos:ToScreen()
     if isKCasting == 1 then 
-    	if ticker - Attacktick < Game.Latency() then
+    	if Game.Latency() > 0 then
    			DelayAction(function()
    			    Control.SetCursorPos(pos)
-   			        BlockMovement()
+   			    BlockMovement()
    			    Control.KeyDown(spell) 
    			    end,0.01) 
    			DelayAction(function() 
@@ -494,7 +491,7 @@ end
 function Ahri:Combo()
     if target == nil then return end	
     if KoreanMechanics.Combo.RS.R:Value() and Ready(_R) and target.distance < KoreanMechanics.Combo.RS.RD:Value() and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then
-        if target.valid and not target.Dead and target.health/target.maxHealth <= KoreanMechanics.Combo.RS.RHP:Value()/100 then
+        if target.valid and not target.dead and target.health/target.maxHealth <= KoreanMechanics.Combo.RS.RHP:Value()/100 then
             KoreanCast(HK_R, Game.mousePos(), KoreanMechanics.AS.RAS:Value())
         end
     end
@@ -1348,8 +1345,8 @@ local Minions = nil
 	if ClearR and Ready(_R) and (myHero.mana/myHero.maxMana >= ClearMana / 100) then
 		for i = 1, #GetEnemyMinions do
 		local Minions = GetEnemyMinions[i]
-		local Count = MinionsAround(Minions.pos, Spells["Blitzcrank"]["StaticField"].range , Minions.team)
-			if Count >= ClearRC then 
+		local Count = MinionsAround(Minions.pos, 600 , Minions.team)
+			if Count >= ClearRC and not Minions.dead and Minions.distance <= 550 then 
 				KoreanCast(HK_R, Game.mousePos(), KoreanMechanics.AS.RAS:Value())
 			end
 		end
