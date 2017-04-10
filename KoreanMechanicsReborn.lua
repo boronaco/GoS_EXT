@@ -352,33 +352,55 @@ local pos = GetPred(target, spellname.speed, spellname.delay + Game.Latency()/10
     end
 end     
 
---local function BlockMovement()
---	if _G.GOS then 
---		GOS.BlockMovement = true
---	elseif _G.SDK and _G.SDK.Orbwalker then
---		_G.SDK.Orbwalker:SetMovement(false)
---	elseif _G.EOWLoaded then
---		EOW:MovementsEnabled(false)
---	end
---end 
+local function BlockMovement()
+	if _G.GOS then 
+		GOS.BlockMovement = true
+	elseif _G.SDK and _G.SDK.Orbwalker then
+		_G.SDK.Orbwalker:SetMovement(false)
+	elseif _G.EOWLoaded then
+		EOW:MovementsEnabled(false)
+	end
+end 
 
--- local function UnblockMovement()
---	if _G.GOS then
---		GOS.BlockMovement = false 
---	elseif _G.SDK and _G.SDK.Orbwalker then
---		_G.SDK.Orbwalker:SetMovement(true)
---	elseif _G.EOWLoaded then
---		EOW:MovementsEnabled(true)
---	end
--- end
+ local function UnblockMovement()
+	if _G.GOS then
+		GOS.BlockMovement = false 
+	elseif _G.SDK and _G.SDK.Orbwalker then
+		_G.SDK.Orbwalker:SetMovement(true)
+	elseif _G.EOWLoaded then
+		EOW:MovementsEnabled(true)
+	end
+ end
 
-local function KoreanCast(spell, pos, delay)
-    local Cursor = Game.mousePos()
-    if pos == nil then return end
-        Control.SetCursorPos(pos)
-        DelayAction(function() Control.KeyDown(spell) end,0.01) 
-        DelayAction(function() Control.KeyUp(spell) end, (delay + Game.Latency()) / 1000)
-end  
+local isKCasting = 0
+function KoreanCast(spell, pos, delay)
+local ticker = GetTickCount()
+    if pos == nil or isKCasting == 1 then return end
+    isKCasting = 1
+local Attacktick = ticker
+	lastAttack = GetTickCount()
+    local cursorReset = mousePos:ToScreen()
+    if isKCasting == 1 then 
+    	if ticker - Attacktick < Game.Latency() then
+   			DelayAction(function()
+   			    Control.SetCursorPos(pos)
+   			        BlockMovement()
+   			    Control.KeyDown(spell) 
+   			    end,0.01) 
+   			DelayAction(function() 
+   			  Control.KeyUp(spell)
+   			 UnblockMovement() 
+   			 Control.SetCursorPos(cursorReset.x, cursorReset.y)
+   			  DelayAction(function()
+   			  	isKCasting = 0
+   			  	end, 0.001)
+   			end, (delay + Game.Latency()) / 1000)
+   		end
+   		if isKCasting == 1 then
+   			Control.SetCursorPos(cursorReset.x, cursorReset.y)
+   		end
+   	end	
+end
 
 class "Ahri"
 
