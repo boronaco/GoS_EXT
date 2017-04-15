@@ -1,4 +1,4 @@
-local KoreanChamps = {"Ahri", "Brand", "Blitzcrank", "Darius", "Diana", "KogMaw"}
+local KoreanChamps = {"Ahri", "Brand", "Blitzcrank", "Darius", "Diana", "KogMaw", "Jhin"}
 if not table.contains(KoreanChamps, myHero.charName)  then print("" ..myHero.charName.. " Is Not (Yet) Supported") return end
 
 local KoreanMechanics = MenuElement({type = MENU, id = "KoreanMechanics", name = "Korean Mechanics Reborn | " ..myHero.charName, leftIcon = "http://4.1m.yt/d5VbDBm.png"})
@@ -7,6 +7,7 @@ KoreanMechanics:MenuElement({type = MENU, id = "Harass", name = "Korean Harass S
 KoreanMechanics:MenuElement({type = MENU, id = "Clear", name = "Clear Settings"})
 KoreanMechanics:MenuElement({type = MENU, id = "Draw", name = "Drawing Settings"})
 KoreanMechanics:MenuElement({type = MENU, id = "AS", name = "CastDelay Settings"})
+KoreanMechanics:MenuElement({type = SPACE, name = "Made by Weedle and Sofie | v2.2"})
 
 local function Ready(spell)
 	return myHero:GetSpellData(spell).currentCd == 0 and myHero:GetSpellData(spell).level > 0 and myHero:GetSpellData(spell).mana <= myHero.mana
@@ -323,15 +324,22 @@ _G.Spells = {
             ["BrandQ"] = {delay = 0.25, range = 1050, speed = 1400, width = 75, skillshot = true, collision = true},
             ["BrandW"] = {delay = 0.625, range = 900, speed = math.huge, width = 187, skillshot = true, collision = false},
             ["BrandE"] = {delay = 0.25, range = 625, speed = math.huge, skillshot = false, collision = false},
-            ["BrandR"] = {delay = 0.25, range = 750, speed = math.huge, skillshot = false, collision = false}}
+            ["BrandR"] = {delay = 0.25, range = 750, speed = math.huge, skillshot = false, collision = false}},
 
+        ["Jhin"] = {
+        	["targetvalue"] = 3000, --kappa
+    		["JhinQ"] = {delay = 0, range = 600, speed = math.huge, skillshot = false, collision = false},
+    		["JhinW"] = {delay = 0.25, range = 2500, speed = 5000, width = 40, skillshot = true, collision = false},
+    		["JhinE"] = {delay = 1.25, range = 750, speed = 1000, width = 120, skillshot = true, collision = false},
+    		["JhinR"] = {delay = 1, range = 3000, speed = 1200, width = 80, skillshot = true, collision = false},
+    		["JhinRShot"] = {delay = 1, range = 3000, speed = 1200, width = 80, skillshot = true, collision = false}}
 }
 --KoreanCast
 function KoreanCanCast(spell)
 local target = KoreanTarget(Spells[myHero.charName]["targetvalue"])
 local spellname = Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)]
     if target == nil then return end
-    local Range = spellname.range * 0.95 or math.huge
+    local Range = spellname.range or math.huge
     if spellname.skillshot == true and spellname.collision == true then 
         if IsValidTarget(target, Range , true) then 
             if not spellname.spellColl:__GetCollision(myHero, target, 5) then
@@ -352,51 +360,35 @@ local pos = GetPred(target, spellname.speed, spellname.delay + Game.Latency()/10
     end
 end     
 
-local function BlockMovement()
-	if _G.GOS then 
-		GOS.BlockMovement = true
-	elseif _G.SDK and _G.SDK.Orbwalker then
-		_G.SDK.Orbwalker:SetMovement(false)
-	elseif _G.EOWLoaded then
-		EOW:MovementsEnabled(false)
-	end
-end 
+local castSpell = {state = 0, tick = GetTickCount(), casting = GetTickCount() - 1000, mouse = mousePos}
 
- local function UnblockMovement()
-	if _G.GOS then
-		GOS.BlockMovement = false 
-	elseif _G.SDK and _G.SDK.Orbwalker then
-		_G.SDK.Orbwalker:SetMovement(true)
-	elseif _G.EOWLoaded then
-		EOW:MovementsEnabled(true)
-	end
- end
+local function KoreanCast(spell,pos,delay)
+	if pos == nil then return end
+local ticker = GetTickCount()
 
-local isKCasting = 0
-function KoreanCast(spell, pos, delay)
-    if pos == nil or isKCasting == 1 then return end
-    isKCasting = 1
-    local cursorReset = mousePos:ToScreen()
-    if isKCasting == 1 then 
-    	if Game.Latency() > 0 then
-   			DelayAction(function()
-   			    Control.SetCursorPos(pos)
-   			    BlockMovement()
-   			    Control.KeyDown(spell) 
-   			    end,0.01) 
-   			DelayAction(function() 
-   			  Control.KeyUp(spell)
-   			 UnblockMovement() 
-   			 Control.SetCursorPos(cursorReset.x, cursorReset.y)
-   			  DelayAction(function()
-   			  	isKCasting = 0
-   			  	end, 0.001)
-   			end, (delay + Game.Latency()) / 1000)
-   		end
-   		if isKCasting == 1 then
-   			Control.SetCursorPos(cursorReset.x, cursorReset.y)
-   		end
-   	end	
+	if castSpell.state == 0 and ticker - castSpell.casting > delay + Game.Latency() and pos:ToScreen().onScreen then
+		castSpell.state = 1
+		castSpell.mouse = mousePos
+		castSpell.tick = ticker
+	end
+	if castSpell.state == 1 then
+		if ticker - castSpell.tick < Game.Latency() then
+			Control.SetCursorPos(pos)
+			Control.KeyDown(spell)
+			Control.KeyUp(spell)
+			castSpell.casting = ticker + delay
+			DelayAction(function()
+				if castSpell.state == 1 then
+					Control.SetCursorPos(castSpell.mouse)
+					castSpell.state = 0
+				end
+			end, Game.Latency()/1000)
+		end
+		if ticker - castSpell.casting > Game.Latency() then
+			Control.SetCursorPos(castSpell.mouse)
+			castSpell.state = 0
+		end
+	end
 end
 
 local function KoreanCast2(spell, pos, delay)
@@ -470,10 +462,10 @@ function Ahri:Menu()
     KoreanMechanics.Draw.TD:MenuElement({id = "Width", name = "Width", value = 1, min = 1, max = 5, step = 1})
     KoreanMechanics.Draw.TD:MenuElement({id = "Color", name = "Color", color = Draw.Color(255, 255, 255, 255)}) 
 
-    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 50, min = 1, max = 1000, step = 10})
 end
 
 function Ahri:Tick()
@@ -701,10 +693,10 @@ function KogMaw:Menu()
     KoreanMechanics.Draw.TD:MenuElement({id = "Width", name = "Width", value = 1, min = 1, max = 5, step = 1})
     KoreanMechanics.Draw.TD:MenuElement({id = "Color", name = "Color", color = Draw.Color(255, 255, 255, 255)}) 
 
-    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 50, min = 1, max = 1000, step = 10})
 end
 
 function KogMaw:Tick()
@@ -999,10 +991,10 @@ function Diana:Menu()
     KoreanMechanics.Draw.TD:MenuElement({id = "Width", name = "Width", value = 1, min = 1, max = 5, step = 1})
     KoreanMechanics.Draw.TD:MenuElement({id = "Color", name = "Color", color = Draw.Color(255, 255, 255, 255)}) 
 
-    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 50, min = 1, max = 1000, step = 10})
 end
 
 function Diana:Tick()
@@ -1251,10 +1243,10 @@ function Blitzcrank:Menu()
     KoreanMechanics.Draw.TD:MenuElement({id = "Width", name = "Width", value = 1, min = 1, max = 5, step = 1})
     KoreanMechanics.Draw.TD:MenuElement({id = "Color", name = "Color", color = Draw.Color(255, 255, 255, 255)}) 
 
-    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 50, min = 1, max = 1000, step = 10})
 end
 
 function Blitzcrank:Tick()
@@ -1439,10 +1431,10 @@ function Brand:Menu()
     KoreanMechanics.Draw.TD:MenuElement({id = "Width", name = "Width", value = 1, min = 1, max = 5, step = 1})
     KoreanMechanics.Draw.TD:MenuElement({id = "Color", name = "Color", color = Draw.Color(255, 255, 255, 255)}) 
 
-    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 50, min = 1, max = 1000, step = 10})
 end
 
 function Brand:Tick()
@@ -1728,10 +1720,10 @@ function Darius:Menu()
     KoreanMechanics.Draw.TD:MenuElement({id = "Width", name = "Width", value = 1, min = 1, max = 5, step = 1})
     KoreanMechanics.Draw.TD:MenuElement({id = "Color", name = "Color", color = Draw.Color(255, 255, 255, 255)}) 
 
-    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value (default 50)", value = 50, min = 1, max = 1000, step = 10})	
+    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 50, min = 1, max = 1000, step = 10})	
 end 
 
 function Darius:Tick()
@@ -1937,6 +1929,5 @@ function Darius:Draw()
 	    end
     end
 end	
-
 
 if _G[myHero.charName]() then print("Welcome back " ..myHero.name.. ", Thank you for using Korean Mechanics Reborn ^^") end
