@@ -339,7 +339,7 @@ function KoreanCanCast(spell)
 local target = KoreanTarget(Spells[myHero.charName]["targetvalue"])
 local spellname = Spells[myHero.charName][tostring(myHero:GetSpellData(spell).name)]
     if target == nil then return end
-    local Range = spellname.range or math.huge
+    local Range = spellname.range * 0.969 or math.huge
     if spellname.skillshot == true and spellname.collision == true then 
         if IsValidTarget(target, Range , true) then 
             if not spellname.spellColl:__GetCollision(myHero, target, 5) then
