@@ -462,10 +462,10 @@ function Ahri:Menu()
     KoreanMechanics.Draw.TD:MenuElement({id = "Width", name = "Width", value = 1, min = 1, max = 5, step = 1})
     KoreanMechanics.Draw.TD:MenuElement({id = "Color", name = "Color", color = Draw.Color(255, 255, 255, 255)}) 
 
-    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 250, min = 1, max = 1000, step = 10})
 end
 
 function Ahri:Tick()
@@ -693,10 +693,10 @@ function KogMaw:Menu()
     KoreanMechanics.Draw.TD:MenuElement({id = "Width", name = "Width", value = 1, min = 1, max = 5, step = 1})
     KoreanMechanics.Draw.TD:MenuElement({id = "Color", name = "Color", color = Draw.Color(255, 255, 255, 255)}) 
 
-    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 250, min = 1, max = 1000, step = 10})
 end
 
 function KogMaw:Tick()
@@ -991,10 +991,10 @@ function Diana:Menu()
     KoreanMechanics.Draw.TD:MenuElement({id = "Width", name = "Width", value = 1, min = 1, max = 5, step = 1})
     KoreanMechanics.Draw.TD:MenuElement({id = "Color", name = "Color", color = Draw.Color(255, 255, 255, 255)}) 
 
-    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 250, min = 1, max = 1000, step = 10})
 end
 
 function Diana:Tick()
@@ -1243,10 +1243,10 @@ function Blitzcrank:Menu()
     KoreanMechanics.Draw.TD:MenuElement({id = "Width", name = "Width", value = 1, min = 1, max = 5, step = 1})
     KoreanMechanics.Draw.TD:MenuElement({id = "Color", name = "Color", color = Draw.Color(255, 255, 255, 255)}) 
 
-    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 250, min = 1, max = 1000, step = 10})
 end
 
 function Blitzcrank:Tick()
@@ -1431,10 +1431,10 @@ function Brand:Menu()
     KoreanMechanics.Draw.TD:MenuElement({id = "Width", name = "Width", value = 1, min = 1, max = 5, step = 1})
     KoreanMechanics.Draw.TD:MenuElement({id = "Color", name = "Color", color = Draw.Color(255, 255, 255, 255)}) 
 
-    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 50, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 250, min = 1, max = 1000, step = 10})
 end
 
 function Brand:Tick()
@@ -1720,10 +1720,10 @@ function Darius:Menu()
     KoreanMechanics.Draw.TD:MenuElement({id = "Width", name = "Width", value = 1, min = 1, max = 5, step = 1})
     KoreanMechanics.Draw.TD:MenuElement({id = "Color", name = "Color", color = Draw.Color(255, 255, 255, 255)}) 
 
-    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 50, min = 1, max = 1000, step = 10})
-    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 50, min = 1, max = 1000, step = 10})	
+    KoreanMechanics.AS:MenuElement({id = "QAS", name = "Q Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "WAS", name = "W Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "EAS", name = "E Delay Value", value = 250, min = 1, max = 1000, step = 10})
+    KoreanMechanics.AS:MenuElement({id = "RAS", name = "R Delay Value", value = 250, min = 1, max = 1000, step = 10})	
 end 
 
 function Darius:Tick()
