@@ -1023,11 +1023,11 @@ function Diana:Combo()
     if target == nil then return end	
     if KoreanMechanics.Combo.W:Value() and Ready(_W) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.WMana:Value() / 100) then
     	if KoreanCanCast(_W) then
-    		KoreanCast2(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
+    		KoreanCast(HK_W, Game.mousePos(), KoreanMechanics.AS.WAS:Value())
     	end
     	if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
     		if KoreanCanCast(_E) then
-    			KoreanCast2(HK_E, Game.mousePos(), KoreanMechanics.AS.EAS:Value())
+    			KoreanCast(HK_E, Game.mousePos(), KoreanMechanics.AS.EAS:Value())
     		end
     	end
     	if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then 
@@ -1038,7 +1038,7 @@ function Diana:Combo()
     end
     if KoreanMechanics.Combo.E:Value() and Ready(_E) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.EMana:Value() / 100) then
     	if KoreanCanCast(_E) then
-    		KoreanCast2(HK_E, Game.mousePos(), KoreanMechanics.AS.EAS:Value())
+    		KoreanCast(HK_E, Game.mousePos(), KoreanMechanics.AS.EAS:Value())
     	end
     	if KoreanMechanics.Combo.Q:Value() and Ready(_Q) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.QMana:Value() / 100) then 
     		if KoreanCanCast(_Q) then
@@ -1054,7 +1054,7 @@ function Diana:Combo()
     if KoreanMechanics.Combo.RS.R:Value()  and Ready(_R) and (myHero.mana/myHero.maxMana >= KoreanMechanics.Combo.MM.RMana:Value() / 100) then 
     	if (target.health/target.maxHealth) <= (KoreanMechanics.Combo.RS.RHP:Value()/100) and Diana:HaveDianaBuff(target) and KoreanCanCast(_R) then
     	local pos = target.pos
-    		KoreanCast(HK_R, pos, KoreanMechanics.AS.RAS:Value())
+    		KoreanCast2(HK_R, pos, KoreanMechanics.AS.RAS:Value())
     	end
     end
     if KoreanMechanics.Combo.Mode:Value() == 2 then
@@ -1929,5 +1929,6 @@ function Darius:Draw()
 	    end
     end
 end	
+
 
 if _G[myHero.charName]() then print("Welcome back " ..myHero.name.. ", Thank you for using Korean Mechanics Reborn ^^") end
